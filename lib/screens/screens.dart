@@ -1,6 +1,4 @@
 export 'package:pn_fl_jewellery_empire/screens/auth/login.dart';
-export 'package:pn_fl_jewellery_empire/screens/auth/otp.dart';
-export 'package:pn_fl_jewellery_empire/screens/auth/register.dart';
 export 'package:pn_fl_jewellery_empire/screens/bottom_bar.dart';
 export 'package:pn_fl_jewellery_empire/screens/cart/cart.dart';
 export 'package:pn_fl_jewellery_empire/screens/categoryProducts/category_products.dart';

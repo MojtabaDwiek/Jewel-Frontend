@@ -1,10 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
-import 'package:iconify_flutter_plus/icons/ant_design.dart';
-import 'package:iconify_flutter_plus/icons/bx.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -19,7 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
+    MediaQuery.sizeOf(context);
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) {
@@ -36,169 +32,34 @@ class _LoginScreenState extends State<LoginScreen> {
                 fixPadding * 3.0, fixPadding * 2.0, fixPadding * 2.0),
             children: [
               contentText(),
-              heightBox(fixPadding * 2.8),
+              heightBox(fixPadding * 15),
               userNameOrEmailField(),
               heightBox(fixPadding * 2.8),
               passwordField(),
               heightBox(2.0),
-              forgetPasswordText(),
+              
               heightBox(fixPadding * 2.8),
               loginButton(),
               heightBox(fixPadding * 2.8),
-              orText(),
+              
               heightSpace,
               heightSpace,
-              loginWithGoogle(size),
-              heightSpace,
-              height5Space,
-              loginWithFacebook(size),
-              heightSpace,
-              height5Space,
-              loginWithApple(size),
+              
             ],
           ),
         ),
-        bottomNavigationBar: registerNowButton(context),
+       
       ),
     );
   }
 
-  registerNowButton(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      padding: const EdgeInsets.fromLTRB(
-          fixPadding * 2.0, fixPadding, fixPadding * 2.0, fixPadding * 2.0),
-      child: Text.rich(
-        TextSpan(
-          text: "Don’t have an account?",
-          style: regular15Grey,
-          children: [
-            const TextSpan(text: " "),
-            TextSpan(
-              text: "Register Now",
-              style: medium15Black,
-              recognizer: TapGestureRecognizer()
-                ..onTap = () {
-                  Navigator.pushNamed(context, '/register');
-                },
-            )
-          ],
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
+  
 
-  loginWithApple(Size size) {
-    return Container(
-      width: double.maxFinite,
-      padding: const EdgeInsets.all(fixPadding * 1.3),
-      decoration: BoxDecoration(
-        color: blackColor,
-        borderRadius: BorderRadius.circular(10.0),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Iconify(
-            AntDesign.apple_filled,
-            size: 24.0,
-            color: whiteColor,
-          ),
-          widthSpace,
-          widthSpace,
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: size.width - 140),
-            child: const Text(
-              "Continue with Apple",
-              style: medium16White,
-              overflow: TextOverflow.ellipsis,
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  loginWithFacebook(Size size) {
-    return Container(
-      width: double.maxFinite,
-      padding: const EdgeInsets.all(fixPadding * 1.3),
-      decoration: BoxDecoration(
-        color: blueColor,
-        borderRadius: BorderRadius.circular(10.0),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Iconify(
-            Bx.bxl_facebook,
-            size: 24.0,
-            color: whiteColor,
-          ),
-          widthSpace,
-          widthSpace,
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: size.width - 140),
-            child: const Text(
-              "Continue with Facebook",
-              style: medium16White,
-              overflow: TextOverflow.ellipsis,
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  loginWithGoogle(Size size) {
-    return Container(
-      width: double.maxFinite,
-      padding: const EdgeInsets.all(fixPadding * 1.3),
-      decoration: BoxDecoration(
-        color: whiteColor,
-        borderRadius: BorderRadius.circular(10.0),
-        border: Border.all(color: blackColor),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset(
-            "assets/icons/google_icon.png",
-            height: 24.0,
-            width: 24.0,
-            fit: BoxFit.cover,
-          ),
-          widthSpace,
-          widthSpace,
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: size.width - 140),
-            child: const Text(
-              "Continue with Google",
-              style: medium16Black,
-              overflow: TextOverflow.ellipsis,
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  orText() {
-    return const Text(
-      "OR",
-      style: regular15Grey,
-      textAlign: TextAlign.center,
-    );
-  }
 
   loginButton() {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, '/register');
+        Navigator.pushNamed(context, '/home');
       },
       child: Container(
         padding: const EdgeInsets.symmetric(
@@ -217,13 +78,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  forgetPasswordText() {
-    return Text(
-      "Forget Password?",
-      style: regular15Black.copyWith(decoration: TextDecoration.underline),
-      textAlign: TextAlign.end,
-    );
-  }
 
   passwordField() {
     return const Column(
@@ -259,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Username or Email",
+          "Username",
           style: regular15Grey,
         ),
         TextField(
@@ -271,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
             border: InputBorder.none,
             enabledBorder: underlineInputBorder,
             focusedBorder: underlineInputBorder,
-            hintText: "Enter Username or Email",
+            hintText: "Enter Username",
             hintStyle: regular17Grey,
             contentPadding:
                 EdgeInsets.only(top: fixPadding * 0.7, bottom: fixPadding),
@@ -282,20 +136,21 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   contentText() {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Login",
-          style: semibold20Black,
+  return const Column(
+    crossAxisAlignment: CrossAxisAlignment.center, // Center horizontally
+    children: [
+      SizedBox(height: 10), // Add space at the top to push the text down
+      Text(
+        "Login",
+        style: TextStyle(
+          fontSize: 40, // Increase font size
+          fontWeight: FontWeight.bold, // Make it bold
+          color: Colors.black, // Set text color
         ),
-        Text(
-          "Please Login to continue",
-          style: regular15Black,
-        ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
   onPopInvoked() {
     DateTime now = DateTime.now();

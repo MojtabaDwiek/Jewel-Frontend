@@ -56,16 +56,7 @@ class MyApp extends StatelessWidget {
             child: const LoginScreen(),
             type: PageTransitionType.rightToLeft,
             settings: settings);
-      case '/register':
-        return PageTransition(
-            child: const RegisterScreen(),
-            type: PageTransitionType.rightToLeft,
-            settings: settings);
-      case '/otp':
-        return PageTransition(
-            child: const OTPScreen(),
-            type: PageTransitionType.rightToLeft,
-            settings: settings);
+      
       case '/bottombar':
         return PageTransition(
             child: const BottomBar(),
