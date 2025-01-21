@@ -101,16 +101,7 @@ class MyApp extends StatelessWidget {
             child: const CartScreen(),
             type: PageTransitionType.rightToLeft,
             settings: settings);
-      case '/selectAddress':
-        return PageTransition(
-            child: const SelectAddressScreen(),
-            type: PageTransitionType.rightToLeft,
-            settings: settings);
-      case '/paymentMethod':
-        return PageTransition(
-            child: const PaymentMethodScreen(),
-            type: PageTransitionType.rightToLeft,
-            settings: settings);
+      
       case '/success':
         return PageTransition(
             child: const SuccessScreen(),
