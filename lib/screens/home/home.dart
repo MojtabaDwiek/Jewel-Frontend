@@ -1,9 +1,11 @@
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
 import 'package:iconify_flutter_plus/icons/bx.dart';
 import 'package:pn_fl_jewellery_empire/screens/bottom_bar.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // For network images
+import 'package:pn_fl_jewellery_empire/services/api_service.dart'; // Import your API service
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -35,81 +37,39 @@ class _HomeScreenState extends State<HomeScreen> {
     {"image": "assets/home/Jewelry-4.png", "title": "Necklace"},
   ];
 
-  final recommendedList = [
-    {
-      "image": "assets/home/Jewelry-1.png",
-      "name": "Silver Plated Ring",
-      "price": "100.00"
-    },
-    {
-      "image": "assets/home/Jewelry-5.png",
-      "name": "Diamond Earrings",
-      "price": "149.50"
-    },
-    {
-      "image": "assets/home/Jewelry-6.png",
-      "name": "Sunshine Ring",
-      "price": "299.50"
-    },
-    {
-      "image": "assets/home/Jewelry-7.png",
-      "name": "Diamond Bracelet",
-      "price": "249.50"
-    },
-    {
-      "image": "assets/home/Jewelry-8.png",
-      "name": "Silver Earrings",
-      "price": "120.00"
-    },
-    {
-      "image": "assets/home/Jewelry-9.png",
-      "name": "Necklace",
-      "price": "150.50"
-    },
-  ];
+  List<dynamic> _recommendedList = [];
+  List<dynamic> _popularList = [];
+  bool _isLoading = false;
+  String _errorMessage = '';
 
-  final popularList = [
-    {
-      "image": "assets/home/Jewelry-6.png",
-      "name": "Silver Ring",
-      "price": "120.00"
-    },
-    {
-      "image": "assets/home/Jewelry-4.png",
-      "name": "Necklace",
-      "price": "150.50"
-    },
-    {
-      "image": "assets/home/Jewelry-7.png",
-      "name": "Bracelet",
-      "price": "199.50"
-    },
-    {
-      "image": "assets/home/Jewelry-10.png",
-      "name": "Silver Ring",
-      "price": "100.00"
-    },
-    {
-      "image": "assets/home/Jewelry-3.png",
-      "name": "Silver Earrings",
-      "price": "120.00"
-    },
-    {
-      "image": "assets/home/Jewelry-9.png",
-      "name": "Necklace",
-      "price": "150.50"
-    },
-    {
-      "image": "assets/home/Jewelry-2.png",
-      "name": "Bracelet",
-      "price": "199.50"
-    },
-    {
-      "image": "assets/home/Jewelry-11.png",
-      "name": "Silver Ring",
-      "price": "100.00"
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchProducts(); // Fetch products when the screen is initialized
+  }
+
+  Future<void> _fetchProducts() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      final products = await ApiService.fetchProducts();
+      setState(() {
+        _recommendedList = products; // Assign fetched products to recommended list
+        _popularList = products; // Assign fetched products to popular list
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to fetch products: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,31 +79,43 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           header(),
           Expanded(
-            child: ListView(
-              shrinkWrap: true,
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.only(top: fixPadding * 2.0),
-              children: [
-                posters(),
-                heightSpace,
-                heightSpace,
-                heightSpace,
-                categoryListContent(),
-                heightSpace,
-                heightSpace,
-                recommendedForYou(),
-                heightSpace,
-                heightSpace,
-                popularListContent(),
-              ],
-            ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage.isNotEmpty
+                    ? Center(
+                        child: Text(
+                          _errorMessage,
+                          style: const TextStyle(color: Colors.red, fontSize: 16),
+                        ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: _fetchProducts, // Trigger refresh on pull
+                        child: ListView(
+                          shrinkWrap: true,
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.only(top: fixPadding * 2.0),
+                          children: [
+                            posters(),
+                            heightSpace,
+                            heightSpace,
+                            heightSpace,
+                            categoryListContent(),
+                            heightSpace,
+                            heightSpace,
+                            recommendedForYou(),
+                            heightSpace,
+                            heightSpace,
+                            popularListContent(),
+                          ],
+                        ),
+                      ),
           )
         ],
       ),
     );
   }
 
-  popularListContent() {
+  Widget popularListContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -159,8 +131,11 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisSpacing: fixPadding * 2.0,
             childAspectRatio: 0.8,
           ),
-          itemCount: popularList.length,
+          itemCount: _popularList.length,
           itemBuilder: (context, index) {
+            final product = _popularList[index];
+            final imageUrl = 'http://192.168.0.104:8000/public/${product['image']}'; // Construct full URL
+            print('Constructed URL: $imageUrl'); // Debug the URL
             return GestureDetector(
               onTap: () {
                 Navigator.pushNamed(context, '/productDetail');
@@ -178,32 +153,35 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Expanded(
                       child: Center(
-                        child: Image.asset(
-                          popularList[index]['image'].toString(),
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl, // Use the constructed URL
                           fit: BoxFit.cover,
+                          placeholder: (context, url) => const CircularProgressIndicator(),
+                          errorWidget: (context, url, error) {
+                            print('Failed to load image: $url, Error: $error'); // Debug the error
+                            return const Icon(Icons.error); // Display an error icon
+                          },
                         ),
                       ),
                     ),
                     Container(
-                      margin: const EdgeInsets.symmetric(
-                          vertical: fixPadding * 1.5),
+                      margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
                       width: double.maxFinite,
                       height: 1.0,
                       color: borderColor,
                     ),
                     Padding(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: fixPadding),
+                      padding: const EdgeInsets.symmetric(horizontal: fixPadding),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            popularList[index]['name'].toString(),
+                            product['name'],
                             style: regular16Black,
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            '\$${popularList[index]['price']}',
+                            '${product['weight']}', // Display weight
                             style: semibold16Black,
                             overflow: TextOverflow.ellipsis,
                           )
@@ -220,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  recommendedForYou() {
+  Widget recommendedForYou() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -231,15 +209,17 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(fixPadding),
           child: Row(
             children: List.generate(
-              recommendedList.length,
+              _recommendedList.length,
               (index) {
+                final product = _recommendedList[index];
+                final imageUrl = 'http://192.168.0.104:8000/public/${product['image']}'; // Construct full URL
+                print('Constructed URL: $imageUrl'); // Debug the URL
                 return GestureDetector(
                   onTap: () {
                     Navigator.pushNamed(context, '/productDetail');
                   },
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
+                    padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
                     width: 158.0,
                     margin: const EdgeInsets.symmetric(horizontal: fixPadding),
                     decoration: BoxDecoration(
@@ -251,32 +231,35 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Center(
-                          child: Image.asset(
-                            recommendedList[index]['image'].toString(),
+                          child: CachedNetworkImage(
+                            imageUrl: imageUrl, // Use the constructed URL
                             height: 95.0,
                             fit: BoxFit.cover,
+                            placeholder: (context, url) => const CircularProgressIndicator(),
+                            errorWidget: (context, url, error) {
+                              print('Failed to load image: $url, Error: $error'); // Debug the error
+                              return const Icon(Icons.error); // Display an error icon
+                            },
                           ),
                         ),
                         Container(
-                          margin: const EdgeInsets.symmetric(
-                              vertical: fixPadding * 1.5),
+                          margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
                           width: double.maxFinite,
                           height: 1.0,
                           color: borderColor,
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: fixPadding),
+                          padding: const EdgeInsets.symmetric(horizontal: fixPadding),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                recommendedList[index]['name'].toString(),
+                                product['name'],
                                 style: regular16Black,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               Text(
-                                '\$${recommendedList[index]['price']}',
+                                '${product['weight']}', // Display weight
                                 style: semibold16Black,
                                 overflow: TextOverflow.ellipsis,
                               )
@@ -295,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  categoryListContent() {
+  Widget categoryListContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -351,7 +334,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  title(String title) {
+  Widget title(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
       child: Text(
@@ -361,7 +344,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  posters() {
+  Widget posters() {
     return CarouselSlider(
       items: List.generate(
         posterList.length,
@@ -424,7 +407,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  header() {
+  Widget header() {
     return Container(
       padding: const EdgeInsets.only(top: fixPadding),
       decoration: headerBoxDecoration,
@@ -442,7 +425,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         title: const Text(
-          "Featured",
+          "Ghamloush Jewelry",
           style: semibold20Black,
         ),
         actions: [

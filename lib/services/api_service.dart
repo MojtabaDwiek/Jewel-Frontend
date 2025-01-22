@@ -29,4 +29,21 @@ class ApiService {
       throw Exception('Network error: $e');
     }
   }
+
+  // Fetch products method
+  static Future<List<dynamic>> fetchProducts() async {
+    final url = Uri.parse('$baseUrl/products'); // Endpoint to fetch products
+    try {
+      final response = await http.get(url);
+
+      // Handle different status codes
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body); // Return the list of products
+      } else {
+        throw Exception('Failed to fetch products: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
 }

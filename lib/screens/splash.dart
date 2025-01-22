@@ -30,20 +30,11 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             Center(
               child: Image.asset(
-                "assets/splash/app_icon.png",
+                "assets/splash/logo.jpg",
                 height: 80.0,
               ),
             ),
-            const Text(
-              "JEWELRY EMPIRE",
-              style: TextStyle(
-                color: blackColor,
-                fontSize: 26.0,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Arya',
-              ),
-              textAlign: TextAlign.center,
-            )
+            
           ],
         ),
       ),

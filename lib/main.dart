@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
           statusBarIconBrightness: Brightness.dark),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Jewellery Empire',
+        title: 'Ghamloush Jewelery',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: primaryColor,
