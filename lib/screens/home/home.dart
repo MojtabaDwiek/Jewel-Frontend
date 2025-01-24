@@ -134,11 +134,14 @@ class _HomeScreenState extends State<HomeScreen> {
           itemCount: _popularList.length,
           itemBuilder: (context, index) {
             final product = _popularList[index];
-            final imageUrl = 'http://192.168.0.104:8000/public/${product['image']}'; // Construct full URL
-            print('Constructed URL: $imageUrl'); // Debug the URL
+            final imageUrl = 'http://192.168.0.104:8000/storage/${product['image']}'; // Construct full URL
             return GestureDetector(
               onTap: () {
-                Navigator.pushNamed(context, '/productDetail');
+                Navigator.pushNamed(
+                  context,
+                  '/productDetail',
+                  arguments: product['id'], // Pass the product ID
+                );
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
@@ -158,7 +161,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           fit: BoxFit.cover,
                           placeholder: (context, url) => const CircularProgressIndicator(),
                           errorWidget: (context, url, error) {
-                            print('Failed to load image: $url, Error: $error'); // Debug the error
                             return const Icon(Icons.error); // Display an error icon
                           },
                         ),
@@ -212,11 +214,14 @@ class _HomeScreenState extends State<HomeScreen> {
               _recommendedList.length,
               (index) {
                 final product = _recommendedList[index];
-                final imageUrl = 'http://192.168.0.104:8000/public/${product['image']}'; // Construct full URL
-                print('Constructed URL: $imageUrl'); // Debug the URL
+                final imageUrl = 'http://192.168.0.104:8000/storage/${product['image']}'; // Construct full URL
                 return GestureDetector(
                   onTap: () {
-                    Navigator.pushNamed(context, '/productDetail');
+                    Navigator.pushNamed(
+                      context,
+                      '/productDetail',
+                      arguments: product['id'], // Pass the product ID
+                    );
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
@@ -237,7 +242,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             fit: BoxFit.cover,
                             placeholder: (context, url) => const CircularProgressIndicator(),
                             errorWidget: (context, url, error) {
-                              print('Failed to load image: $url, Error: $error'); // Debug the error
                               return const Icon(Icons.error); // Display an error icon
                             },
                           ),
