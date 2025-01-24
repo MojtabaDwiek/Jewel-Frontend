@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // For network images
+import 'package:pn_fl_jewellery_empire/services/api_service.dart'; // Import your API service
 
 class CategoryProductsScreen extends StatefulWidget {
   const CategoryProductsScreen({super.key});
@@ -9,68 +11,46 @@ class CategoryProductsScreen extends StatefulWidget {
 }
 
 class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
-  final categoryProductList = [
-    {
-      "image": "assets/home/Jewelry-1.png",
-      "name": "Silver Plated Ring",
-      "price": 100.00
-    },
-    {
-      "image": "assets/home/Jewelry-6.png",
-      "name": "Diamond Ring",
-      "price": 119.50
-    },
-    {
-      "image": "assets/home/Jewelry-12.png",
-      "name": "Silver Ring",
-      "price": 120.50
-    },
-    {
-      "image": "assets/home/Jewelry-10.png",
-      "name": "Silver Grace Ring",
-      "price": 125.25
-    },
-    {
-      "image": "assets/home/Jewelry-11.png",
-      "name": "Silver Ring",
-      "price": 124.50
-    },
-    {
-      "image": "assets/home/Jewelry-13.png",
-      "name": "Platinum Plated Ring",
-      "price": 149.50
-    },
-    {
-      "image": "assets/home/Jewelry-14.png",
-      "name": "Steel Metal Ring",
-      "price": 120.50
-    },
-    {
-      "image": "assets/home/Jewelry-1.png",
-      "name": "Silver Plated Ring",
-      "price": 100.00
-    },
-    {
-      "image": "assets/home/Jewelry-6.png",
-      "name": "Diamond Ring",
-      "price": 119.50
-    },
-    {
-      "image": "assets/home/Jewelry-11.png",
-      "name": "Silver Ring",
-      "price": 124.50
-    },
-    {
-      "image": "assets/home/Jewelry-6.png",
-      "name": "Diamond Ring",
-      "price": 119.50
-    },
-    {
-      "image": "assets/home/Jewelry-11.png",
-      "name": "Silver Ring",
-      "price": 124.50
-    },
-  ];
+  List<dynamic> _categoryProducts = []; // To store products for the selected category
+  bool _isLoading = false;
+  String _errorMessage = '';
+  String? categoryName; // To store the selected category name
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Retrieve the category name from the navigation arguments
+    final args = ModalRoute.of(context)!.settings.arguments;
+    if (args != null) {
+      categoryName = args as String;
+      _fetchCategoryProducts(); // Fetch products for the selected category
+    }
+  }
+
+  Future<void> _fetchCategoryProducts() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      final products = await ApiService.fetchProducts(); // Fetch all products
+      // Filter products by the selected category
+      setState(() {
+        _categoryProducts = products
+            .where((product) => product['category'] == categoryName)
+            .toList();
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to fetch products: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,83 +58,105 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       body: Column(
         children: [
           header(context),
-          productListContent(),
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _errorMessage.isNotEmpty
+                  ? Center(
+                      child: Text(
+                        _errorMessage,
+                        style: const TextStyle(color: Colors.red, fontSize: 16),
+                      ),
+                    )
+                  : productListContent(),
         ],
       ),
     );
   }
 
-  productListContent() {
+  Widget productListContent() {
     return Expanded(
-        child: GridView.builder(
-      shrinkWrap: true,
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(fixPadding * 2.0),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: fixPadding * 2.0,
-        crossAxisSpacing: fixPadding * 2.0,
-        childAspectRatio: 0.8,
-      ),
-      itemCount: categoryProductList.length,
-      itemBuilder: (context, index) {
-        return GestureDetector(
-          onTap: () {
-            Navigator.pushNamed(context, '/productDetail');
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
-            width: double.maxFinite,
-            decoration: BoxDecoration(
-              color: whiteColor,
-              borderRadius: BorderRadius.circular(10.0),
-              border: Border.all(color: borderColor),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Center(
-                    child: Image.asset(
-                      categoryProductList[index]['image'].toString(),
-                      fit: BoxFit.cover,
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.all(fixPadding * 2.0),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: fixPadding * 2.0,
+          crossAxisSpacing: fixPadding * 2.0,
+          childAspectRatio: 0.8,
+        ),
+        itemCount: _categoryProducts.length,
+        itemBuilder: (context, index) {
+          final product = _categoryProducts[index];
+          final imageUrl =
+              'http://192.168.0.104:8000/storage/${product['image']}'; // Construct full URL
+          return GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(
+                context,
+                '/productDetail',
+                arguments: product['id'], // Pass the product ID
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
+              width: double.maxFinite,
+              decoration: BoxDecoration(
+                color: whiteColor,
+                borderRadius: BorderRadius.circular(10.0),
+                border: Border.all(color: borderColor),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: CachedNetworkImage(
+                        imageUrl: imageUrl, // Use the constructed URL
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) =>
+                            const CircularProgressIndicator(),
+                        errorWidget: (context, url, error) {
+                          return const Icon(Icons.error); // Display an error icon
+                        },
+                      ),
                     ),
                   ),
-                ),
-                Container(
-                  margin:
-                      const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
-                  width: double.maxFinite,
-                  height: 1.0,
-                  color: borderColor,
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: fixPadding),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        categoryProductList[index]['name'].toString(),
-                        style: regular16Black,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        '\$${(categoryProductList[index]['price'] as double).toStringAsFixed(2)}',
-                        style: semibold16Black,
-                        overflow: TextOverflow.ellipsis,
-                      )
-                    ],
+                  Container(
+                    margin:
+                        const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
+                    width: double.maxFinite,
+                    height: 1.0,
+                    color: borderColor,
                   ),
-                )
-              ],
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: fixPadding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product['name'],
+                          style: regular16Black,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '${product['weight']}', // Display weight
+                          style: semibold16Black,
+                          overflow: TextOverflow.ellipsis,
+                        )
+                      ],
+                    ),
+                  )
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    ));
+          );
+        },
+      ),
+    );
   }
 
-  header(BuildContext context) {
+  Widget header(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(top: fixPadding),
       decoration: headerBoxDecoration,
@@ -174,8 +176,8 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
           ),
         ),
         titleSpacing: fixPadding * 1.5,
-        title: const Text(
-          "Rings",
+        title: Text(
+          categoryName ?? "Category Products", // Display the category name
           style: semibold20Black,
         ),
       ),

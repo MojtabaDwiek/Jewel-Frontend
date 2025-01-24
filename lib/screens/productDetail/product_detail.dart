@@ -62,18 +62,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         details['lengths'] = []; // Default to an empty list if lengths is null
       }
 
-      setState(() {
-        productDetails = details;
-      });
+      if (mounted) {
+        setState(() {
+          productDetails = details;
+        });
+      }
     } catch (e) {
       print('Error fetching product details: $e'); // Debug statement
-      setState(() {
-        _errorMessage = 'Failed to fetch product details: $e';
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to fetch product details: $e';
+        });
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

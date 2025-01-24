@@ -27,14 +27,13 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   final categoryList = [
-    {"image": "assets/home/Jewelry-1.png", "title": "Rings"},
-    {"image": "assets/home/Jewelry-2.png", "title": "Bracelets"},
-    {"image": "assets/home/Jewelry-3.png", "title": "Earrings "},
-    {"image": "assets/home/Jewelry-4.png", "title": "Necklace"},
-    {"image": "assets/home/Jewelry-1.png", "title": "Rings"},
-    {"image": "assets/home/Jewelry-2.png", "title": "Bracelets"},
-    {"image": "assets/home/Jewelry-3.png", "title": "Earrings "},
-    {"image": "assets/home/Jewelry-4.png", "title": "Necklace"},
+    {"image": "assets/home/Jewelry-1.png", "title": "كسر شفت"},
+    {"image": "assets/home/Jewelry-2.png", "title": "تعاليق"},
+    {"image": "assets/home/Jewelry-3.png", "title": "غورميت"},
+    {"image": "assets/home/Jewelry-4.png", "title": "فرنكات"},
+    {"image": "assets/home/Jewelry-1.png", "title": "تركي"},
+    {"image": "assets/home/Jewelry-2.png", "title": "ليزر"},
+    {"image": "assets/home/Jewelry-3.png", "title": "خواتم"},
   ];
 
   List<dynamic> _recommendedList = [];
@@ -115,86 +114,62 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget popularListContent() {
+  Widget categoryListContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        title("Popular"),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(
-              fixPadding * 2.0, fixPadding, fixPadding * 2.0, fixPadding * 2.0),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: fixPadding * 2.0,
-            crossAxisSpacing: fixPadding * 2.0,
-            childAspectRatio: 0.8,
-          ),
-          itemCount: _popularList.length,
-          itemBuilder: (context, index) {
-            final product = _popularList[index];
-            final imageUrl = 'http://192.168.0.104:8000/storage/${product['image']}'; // Construct full URL
-            return GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  '/productDetail',
-                  arguments: product['id'], // Pass the product ID
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
-                width: double.maxFinite,
-                decoration: BoxDecoration(
-                  color: whiteColor,
-                  borderRadius: BorderRadius.circular(10.0),
-                  border: Border.all(color: borderColor),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Center(
-                        child: CachedNetworkImage(
-                          imageUrl: imageUrl, // Use the constructed URL
+        title("Category"),
+        SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.all(fixPadding),
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: List.generate(
+              categoryList.length,
+              (index) {
+                return GestureDetector(
+                  onTap: () {
+                    // Navigate to CategoryProductsScreen with the selected category
+                    Navigator.pushNamed(
+                      context,
+                      '/categoryProducts',
+                      arguments: categoryList[index]['title'], // Pass the category name
+                    );
+                  },
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
+                    width: 110.0,
+                    margin: const EdgeInsets.symmetric(horizontal: fixPadding),
+                    decoration: BoxDecoration(
+                      color: whiteColor,
+                      borderRadius: BorderRadius.circular(10.0),
+                      border: Border.all(color: borderColor),
+                    ),
+                    child: Column(
+                      children: [
+                        Image.asset(
+                          categoryList[index]['image'].toString(),
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => const CircularProgressIndicator(),
-                          errorWidget: (context, url, error) {
-                            return const Icon(Icons.error); // Display an error icon
-                          },
+                          height: 83.0,
                         ),
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
-                      width: double.maxFinite,
-                      height: 1.0,
-                      color: borderColor,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: fixPadding),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            product['name'],
-                            style: regular16Black,
+                        heightSpace,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: fixPadding),
+                          child: Text(
+                            categoryList[index]['title'].toString(),
+                            style: medium16Black,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          Text(
-                            '${product['weight']}', // Display weight
-                            style: semibold16Black,
-                            overflow: TextOverflow.ellipsis,
-                          )
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            );
-          },
+                        )
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         )
       ],
     );
@@ -282,57 +257,86 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget categoryListContent() {
+  Widget popularListContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        title("Category"),
-        SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.all(fixPadding),
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: List.generate(
-              categoryList.length,
-              (index) {
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, '/categoryProducts');
-                  },
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
-                    width: 110.0,
-                    margin: const EdgeInsets.symmetric(horizontal: fixPadding),
-                    decoration: BoxDecoration(
-                      color: whiteColor,
-                      borderRadius: BorderRadius.circular(10.0),
-                      border: Border.all(color: borderColor),
-                    ),
-                    child: Column(
-                      children: [
-                        Image.asset(
-                          categoryList[index]['image'].toString(),
-                          fit: BoxFit.cover,
-                          height: 83.0,
-                        ),
-                        heightSpace,
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: fixPadding),
-                          child: Text(
-                            categoryList[index]['title'].toString(),
-                            style: medium16Black,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
+        title("Popular"),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+              fixPadding * 2.0, fixPadding, fixPadding * 2.0, fixPadding * 2.0),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: fixPadding * 2.0,
+            crossAxisSpacing: fixPadding * 2.0,
+            childAspectRatio: 0.8,
+          ),
+          itemCount: _popularList.length,
+          itemBuilder: (context, index) {
+            final product = _popularList[index];
+            final imageUrl = 'http://192.168.0.104:8000/storage/${product['image']}'; // Construct full URL
+            return GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/productDetail',
+                  arguments: product['id'], // Pass the product ID
                 );
               },
-            ),
-          ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
+                width: double.maxFinite,
+                decoration: BoxDecoration(
+                  color: whiteColor,
+                  borderRadius: BorderRadius.circular(10.0),
+                  border: Border.all(color: borderColor),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Center(
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl, // Use the constructed URL
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const CircularProgressIndicator(),
+                          errorWidget: (context, url, error) {
+                            return const Icon(Icons.error); // Display an error icon
+                          },
+                        ),
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
+                      width: double.maxFinite,
+                      height: 1.0,
+                      color: borderColor,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: fixPadding),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            product['name'],
+                            style: regular16Black,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '${product['weight']}', // Display weight
+                            style: semibold16Black,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            );
+          },
         )
       ],
     );

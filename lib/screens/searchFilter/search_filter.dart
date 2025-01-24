@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_xlider/flutter_xlider.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
 
 class SearchFilterScreen extends StatefulWidget {
@@ -9,38 +8,29 @@ class SearchFilterScreen extends StatefulWidget {
   State<SearchFilterScreen> createState() => _SearchFilterScreenState();
 }
 
-class _SearchFilterScreenState extends State<SearchFilterScreen> {
-  final featureList = [
-    "Below 25mm",
-    "Between 25-35mm",
-    "35mm and above",
-    "Plugs",
-    "Tunnels"
-  ];
-  int selectedFeature = 2;
+class _SearchFilterScreenState extends State<SearchFilterScreen>
+    with SingleTickerProviderStateMixin {
+  final sizeList = ["46", "48", "50", "52", "56", "58", "60"];
+  final lengthList = ["1", "18", "20", "22", "24", "26", "28"];
+  final weightList = ["1", "20", "30", "40", "50", "60", "70"];
 
-  final brandList = [
-    {"name": "Sukkhi", "isSelected": false},
-    {"name": "YouBella", "isSelected": false},
-    {"name": "Peora", "isSelected": true},
-    {"name": "Zaveri Pearls", "isSelected": false},
-    {"name": "Zeneme", "isSelected": false},
-    {"name": "Karatcart", "isSelected": false},
-    {"name": "Mansiyaorange", "isSelected": false},
-    {"name": "Lucky Jewelry", "isSelected": false}
-  ];
+  List<String> selectedSizes = [];
+  List<String> selectedLengths = [];
+  List<String> selectedWeights = [];
 
-  final materialList = [
-    {"name": "Brass", "isSelected": false},
-    {"name": "Yellow Gold", "isSelected": false},
-    {"name": "Rose Gold", "isSelected": true},
-    {"name": "Silver", "isSelected": false},
-    {"name": "Platinum", "isSelected": false},
-    {"name": "White Gold", "isSelected": false},
-  ];
+  late TabController _tabController;
 
-  double lValue = 0;
-  double uValue = 200;
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,30 +38,123 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
       body: Column(
         children: [
           header(context),
+          TabBar(
+            controller: _tabController,
+            labelColor: blackColor,
+            unselectedLabelColor: greyColor,
+            indicatorColor: blackColor,
+            tabs: const [
+              Tab(text: "Size"),
+              Tab(text: "Length"),
+              Tab(text: "Weight"),
+            ],
+          ),
           Expanded(
-            child: ListView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(fixPadding * 2.0),
+            child: TabBarView(
+              controller: _tabController,
               children: [
-                features(),
-                heightSpace,
-                heightSpace,
-                heightSpace,
-                brand(),
-                heightSpace,
-                heightSpace,
-                heightSpace,
-                material(),
-                heightSpace,
-                heightSpace,
-                heightSpace,
-                priceRange(),
+                sizeFilter(),
+                lengthFilter(),
+                weightFilter(),
               ],
             ),
-          )
+          ),
         ],
       ),
       bottomNavigationBar: applyButton(context),
+    );
+  }
+
+  Widget sizeFilter() {
+    return ListView(
+      padding: const EdgeInsets.all(fixPadding * 2.0),
+      children: [
+        Wrap(
+          spacing: fixPadding,
+          runSpacing: fixPadding,
+          children: List.generate(
+            sizeList.length,
+            (index) {
+              return InkWell(
+                onTap: () {
+                  setState(() {
+                    if (selectedSizes.contains(sizeList[index])) {
+                      selectedSizes.remove(sizeList[index]);
+                    } else {
+                      selectedSizes.add(sizeList[index]);
+                    }
+                  });
+                },
+                child: selectedSizes.contains(sizeList[index])
+                    ? selectedWidget(sizeList[index])
+                    : unselectedWidget(sizeList[index]),
+              );
+            },
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget lengthFilter() {
+    return ListView(
+      padding: const EdgeInsets.all(fixPadding * 2.0),
+      children: [
+        Wrap(
+          spacing: fixPadding,
+          runSpacing: fixPadding,
+          children: List.generate(
+            lengthList.length,
+            (index) {
+              return InkWell(
+                onTap: () {
+                  setState(() {
+                    if (selectedLengths.contains(lengthList[index])) {
+                      selectedLengths.remove(lengthList[index]);
+                    } else {
+                      selectedLengths.add(lengthList[index]);
+                    }
+                  });
+                },
+                child: selectedLengths.contains(lengthList[index])
+                    ? selectedWidget(lengthList[index])
+                    : unselectedWidget(lengthList[index]),
+              );
+            },
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget weightFilter() {
+    return ListView(
+      padding: const EdgeInsets.all(fixPadding * 2.0),
+      children: [
+        Wrap(
+          spacing: fixPadding,
+          runSpacing: fixPadding,
+          children: List.generate(
+            weightList.length,
+            (index) {
+              return InkWell(
+                onTap: () {
+                  setState(() {
+                    if (selectedWeights.contains(weightList[index])) {
+                      selectedWeights.remove(weightList[index]);
+                    } else {
+                      selectedWeights.add(weightList[index]);
+                    }
+                  });
+                },
+                child: selectedWeights.contains(weightList[index])
+                    ? selectedWidget(weightList[index])
+                    : unselectedWidget(weightList[index]),
+              );
+            },
+          ),
+        )
+      ],
     );
   }
 
@@ -80,7 +163,12 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: GestureDetector(
         onTap: () {
-          Navigator.pop(context);
+          // Pass the selected filters back to the SearchScreen
+          Navigator.pop(context, {
+            'sizes': selectedSizes,
+            'lengths': selectedLengths,
+            'weights': selectedWeights,
+          });
         },
         child: Container(
           margin: const EdgeInsets.all(fixPadding * 2.0),
@@ -98,161 +186,6 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  priceRange() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        title("PRICE RANGE"),
-        FlutterSlider(
-          values: [lValue, uValue],
-          rangeSlider: true,
-          max: 500,
-          min: 0,
-          handlerWidth: 20.0,
-          handlerHeight: 20.0,
-          trackBar: FlutterSliderTrackBar(
-            activeTrackBarHeight: 6.0,
-            inactiveTrackBarHeight: 6.0,
-            activeTrackBar: const BoxDecoration(color: blackColor),
-            inactiveTrackBar: BoxDecoration(
-              color: borderColor,
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-          ),
-          rightHandler: FlutterSliderHandler(
-            child: Container(
-              height: 20.0,
-              width: 20.0,
-              decoration: BoxDecoration(
-                color: blackColor,
-                shape: BoxShape.circle,
-                border: Border.all(color: whiteColor, width: 1.5),
-              ),
-            ),
-          ),
-          handler: FlutterSliderHandler(
-            child: Container(
-              height: 20.0,
-              width: 20.0,
-              decoration: BoxDecoration(
-                color: blackColor,
-                shape: BoxShape.circle,
-                border: Border.all(color: whiteColor, width: 1.5),
-              ),
-            ),
-          ),
-          tooltip: FlutterSliderTooltip(
-            alwaysShowTooltip: true,
-            positionOffset: FlutterSliderTooltipPositionOffset(top: 35),
-            custom: (value) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 40.0),
-                child: Text(
-                  "\$$value",
-                  style: regular15Grey,
-                ),
-              );
-            },
-          ),
-          onDragging: (handlerIndex, lowerValue, upperValue) {
-            lValue = lowerValue;
-            uValue = upperValue;
-            setState(() {});
-          },
-        )
-      ],
-    );
-  }
-
-  material() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        title("MATERIAL"),
-        heightSpace,
-        Wrap(
-          spacing: fixPadding,
-          runSpacing: fixPadding,
-          children: List.generate(
-            materialList.length,
-            (index) {
-              return InkWell(
-                onTap: () {
-                  setState(() {
-                    materialList[index]['isSelected'] =
-                        !(materialList[index]['isSelected'] as bool);
-                  });
-                },
-                child: materialList[index]['isSelected'] == true
-                    ? selectedWidget(materialList[index]['name'].toString())
-                    : unselectedWidget(materialList[index]['name'].toString()),
-              );
-            },
-          ),
-        )
-      ],
-    );
-  }
-
-  brand() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        title("BRAND"),
-        heightSpace,
-        Wrap(
-          spacing: fixPadding,
-          runSpacing: fixPadding,
-          children: List.generate(
-            brandList.length,
-            (index) {
-              return InkWell(
-                onTap: () {
-                  setState(() {
-                    brandList[index]['isSelected'] =
-                        !(brandList[index]['isSelected'] as bool);
-                  });
-                },
-                child: brandList[index]['isSelected'] == true
-                    ? selectedWidget(brandList[index]['name'].toString())
-                    : unselectedWidget(brandList[index]['name'].toString()),
-              );
-            },
-          ),
-        )
-      ],
-    );
-  }
-
-  features() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        title("FEATURES"),
-        heightSpace,
-        Wrap(
-          spacing: fixPadding,
-          runSpacing: fixPadding,
-          children: List.generate(
-            featureList.length,
-            (index) {
-              return InkWell(
-                onTap: () {
-                  setState(() {
-                    selectedFeature = index;
-                  });
-                },
-                child: selectedFeature == index
-                    ? selectedWidget(featureList[index].toString())
-                    : unselectedWidget(featureList[index].toString()),
-              );
-            },
-          ),
-        )
-      ],
     );
   }
 
@@ -284,13 +217,6 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
         title,
         style: regular15White,
       ),
-    );
-  }
-
-  title(String title) {
-    return Text(
-      title,
-      style: medium14Primary,
     );
   }
 
