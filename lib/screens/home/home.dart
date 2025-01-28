@@ -6,6 +6,7 @@ import 'package:pn_fl_jewellery_empire/screens/bottom_bar.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
 import 'package:cached_network_image/cached_network_image.dart'; // For network images
 import 'package:pn_fl_jewellery_empire/services/api_service.dart'; // Import your API service
+import 'package:shared_preferences/shared_preferences.dart'; // For logout functionality
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -68,6 +69,16 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  // Logout functionality
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('isLoggedIn'); // Clear login state
+    await prefs.remove('token'); // Clear token
+
+    // Navigate back to the login screen
+    Navigator.pushReplacementNamed(context, '/login');
   }
 
   @override
@@ -420,21 +431,22 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.only(top: fixPadding),
       decoration: headerBoxDecoration,
       child: AppBar(
-        automaticallyImplyLeading: false,
+        automaticallyImplyLeading: false, // Remove the default back button
         backgroundColor: Colors.transparent,
         elevation: 0.0,
         titleSpacing: 0.0,
         centerTitle: true,
-        leading: const IconButton(
-          onPressed: null,
-          icon: Icon(
-            Icons.sort,
-            color: blackColor,
-          ),
-        ),
         title: const Text(
           "Ghamloush Jewelry",
           style: semibold20Black,
+        ),
+        leading: IconButton(
+          padding: const EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
+          onPressed: _logout, // Trigger logout
+          icon: const Icon(
+            Icons.logout,
+            size: 22.0,
+          ),
         ),
         actions: [
           IconButton(

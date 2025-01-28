@@ -1,33 +1,79 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 class ApiService {
   static const String baseUrl = 'http://192.168.0.104:8000/api'; // Use HTTP for local development
 
-  // Generic login method
-  static Future<Map<String, dynamic>> login(String username, String password) async {
-    final url = Uri.parse('$baseUrl/login');
+ static Future<Map<String, dynamic>> login(String username, String password) async {
     try {
       final response = await http.post(
-        url,
+        Uri.parse('$baseUrl/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'username': username,
-          'password': password,
-        }),
+        body: jsonEncode({'username': username, 'password': password}),
       );
 
-      // Handle different status codes
+      final data = jsonDecode(response.body);
+
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else if (response.statusCode == 401) {
-        throw Exception('Invalid credentials');
+        // Save token and user data to SharedPreferences
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setString('token', data['token']);
+        prefs.setString('user', jsonEncode(data['user']));
+
+        print('Login successful: ${data['message']}');
+
+        // Return the token and user data as a map
+        return {
+          'token': data['token'],
+          'user': data['user'],
+        };
       } else {
-        throw Exception('Failed to login: ${response.statusCode}');
+        print('Login failed: ${data['message']}');
+        throw Exception(data['message']);
       }
-    } catch (e) {
-      throw Exception('Network error: $e');
+    } catch (error) {
+      print('Login error: $error');
+      rethrow; // Re-throw the error so that it can be handled in the UI
     }
+  }
+
+  static Future<void> logout() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/logout'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        // Clear token and user data from SharedPreferences
+        prefs.remove('token');
+        prefs.remove('user');
+
+        print('Logout successful: ${data['message']}');
+      } else {
+        print('Logout failed: ${data['message']}');
+        throw Exception(data['message']);
+      }
+    } catch (error) {
+      print('Logout error: $error');
+      throw error;
+    }
+  }
+
+  static Future<bool> isLoggedIn() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token') != null;
   }
 
   // Fetch all products

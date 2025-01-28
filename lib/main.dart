@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:pn_fl_jewellery_empire/screens/auth/login.dart';
 import 'package:pn_fl_jewellery_empire/screens/screens.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
 
@@ -38,7 +39,7 @@ class MyApp extends StatelessWidget {
             ),
           ),
         ),
-        home: const SplashScreen(),
+        home: const LoginScreen(),
         onGenerateRoute: routes,
       ),
     );
