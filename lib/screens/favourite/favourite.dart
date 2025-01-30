@@ -29,7 +29,7 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
       if (token == null) {
         throw Exception('User not logged in');
       }
-      
+
       final favorites = await ApiService.viewFavorites(); // Use ApiService to fetch favorites
       print("Favorites: $favorites"); // Debugging to check if the API response is correct
       setState(() {
@@ -129,68 +129,77 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
         crossAxisCount: 2,
         mainAxisSpacing: fixPadding * 2.0,
         crossAxisSpacing: fixPadding * 2.0,
-        childAspectRatio: 0.8,
+        childAspectRatio: 0.75, // Adjusted for better proportions
       ),
       itemBuilder: (context, index) {
-        final product = favouriteList[index]; // Now directly accessing the product
-        final imageUrl = 'http://192.168.0.104:8000/storage/${product['image']}'; // Construct full URL
-        
+        final product = favouriteList[index];
+        final imageUrl = 'http://192.168.0.104:8000/storage/${product['image']}';
+
         return GestureDetector(
           onTap: () {
             Navigator.pushNamed(
               context,
               '/productDetail',
-              arguments: product['id'], // Pass the product ID
+              arguments: product['id'],
             );
           },
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
-            width: double.maxFinite,
             decoration: BoxDecoration(
               color: whiteColor,
-              borderRadius: BorderRadius.circular(10.0),
-              border: Border.all(color: borderColor),
+              borderRadius: BorderRadius.circular(12.0), // Rounded corners
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 6.0,
+                  offset: const Offset(0, 2), // Subtle shadow
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Product Image
                 Expanded(
-                  child: Center(
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12.0), // Rounded top corners
+                    ),
                     child: CachedNetworkImage(
                       imageUrl: imageUrl,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => const CircularProgressIndicator(),
-                      errorWidget: (context, url, error) {
-                        return const Icon(Icons.error); // Display error icon if image fails to load
-                      },
+                      width: double.infinity,
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      errorWidget: (context, url, error) => const Icon(
+                        Icons.error,
+                        color: Colors.red,
+                      ),
                     ),
                   ),
                 ),
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
-                  width: double.maxFinite,
-                  height: 1.0,
-                  color: borderColor,
-                ),
+                // Product Details
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: fixPadding),
+                  padding: const EdgeInsets.all(fixPadding),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        product['name'] ?? "Unknown Product", // Default text if name is null
+                        product['name'] ?? "Unknown Product",
                         style: regular16Black,
                         overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
+                      const SizedBox(height: 4.0), // Spacing
                       Text(
-                        "${product['weight'] ?? 'N/A'}", // Use weight instead of price
+                        "${product['weight'] ?? 'N/A'}",
                         style: semibold16Black,
                         overflow: TextOverflow.ellipsis,
-                      )
+                      ),
                     ],
                   ),
                 ),
-                // Remove icon button
+                // Remove from Favourite Button
                 Align(
                   alignment: Alignment.topRight,
                   child: Padding(
@@ -202,6 +211,7 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
                       child: const Iconify(
                         Ph.heart_straight_fill,
                         size: 20.0,
+                        color: Colors.red, // Highlight the heart icon
                       ),
                     ),
                   ),
