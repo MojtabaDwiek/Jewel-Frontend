@@ -83,6 +83,40 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
   }
 
+  // Method to add product to favorites
+  Future<void> _addToFavorites() async {
+    try {
+      await ApiService.addToFavorites(productId);
+      setState(() {
+        isFavourite = true; // Mark as favorite after successful addition
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: blackColor,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(milliseconds: 1500),
+          content: Text(
+            "Added to favorites",
+            style: medium16White,
+          ),
+        ),
+      );
+    } catch (e) {
+      // If there's an error adding to favorites
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: blackColor,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(milliseconds: 1500),
+          content: Text(
+            'Error: $e',
+            style: medium16White,
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
@@ -315,7 +349,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       actions: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: fixPadding * 0.5),
-          child: favouriteIconButton(context), // Favorite button on top right
+          child: IconButton(
+            onPressed: _addToFavorites, // Call addToFavorites directly
+            icon: const Iconify(
+              Ph.heart_straight,
+              size: 22.0,
+              color: blackColor,
+            ),
+          ),
         ),
       ],
       flexibleSpace: productImages(size),
@@ -378,34 +419,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           )
         ],
-      ),
-    );
-  }
-
-  favouriteIconButton(BuildContext context) {
-    return IconButton(
-      padding: const EdgeInsets.symmetric(horizontal: fixPadding),
-      onPressed: () {
-        print('Favourite button pressed'); // Debug statement
-        setState(() {
-          isFavourite = !isFavourite;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: blackColor,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(milliseconds: 1500),
-            content: Text(
-              isFavourite ? "Added to favourite" : "Removed from favourite",
-              style: medium16White,
-            ),
-          ),
-        );
-      },
-      icon: Iconify(
-        isFavourite ? Ph.heart_straight_fill : Ph.heart_straight,
-        size: 22.0,
-        color: blackColor,
       ),
     );
   }
