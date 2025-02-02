@@ -3,9 +3,12 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cached_network_image/cached_network_image.dart'; // For network images
 import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
 import 'package:iconify_flutter_plus/icons/ph.dart';
+import 'package:pn_fl_jewellery_empire/Models/CartItem.dart';
 import 'package:pn_fl_jewellery_empire/screens/bottom_bar.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
 import 'package:pn_fl_jewellery_empire/services/api_service.dart'; // Import your API service
+import 'package:provider/provider.dart'; // Import provider package
+import 'package:pn_fl_jewellery_empire/cart_provider.dart'; // Import your CartProvider
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({super.key});
@@ -153,37 +156,73 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  addToCartButton() {
+ addToCartButton() {
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: GestureDetector(
         onTap: () {
-          print('Add to cart button pressed'); // Debug statement
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const BottomBar(index: 2),
-            ),
+          // Pass the image path directly, without constructing the URL here
+          final imagePath = productDetails!['image'];  // Image path stored in productDetails
+
+          print("Product Image Path for Cart: $imagePath");  // Debugging image path
+
+          // Create a CartItem object with the product details
+          final cartItem = CartItem(
+            id: productDetails!['id'].toString(), // Product ID
+            name: productDetails!['name'], // Product name
+            category: productDetails!['category'], // Product category
+            weight: double.parse(productDetails!['weight'].toString()), // Product weight
+            selectedSize: productDetails!['sizes'][selectedSize].toString(), // Selected size
+            selectedLength: productDetails!['lengths'][selectedLength].toString(), // Selected length
+            quantity: 1, // Default quantity
+            imageUrl: imagePath, // Passing image path directly
           );
-        },
-        child: Container(
-          width: double.maxFinite,
-          padding: const EdgeInsets.symmetric(
-              vertical: fixPadding * 1.5, horizontal: fixPadding * 2.0),
-          margin: const EdgeInsets.all(fixPadding * 2.0),
-          decoration: BoxDecoration(
-            color: blackColor,
-            borderRadius: BorderRadius.circular(10.0),
+
+        // Add the product to the cart
+        cartProvider.addToCart(cartItem);
+
+        // Show a success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: blackColor,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(milliseconds: 1500),
+            content: Text(
+              "Added to cart",
+              style: medium16White,
+            ),
           ),
-          child: const Text(
-            "Add to Cart",
-            style: medium19White,
-            textAlign: TextAlign.center,
+        );
+
+        // Navigate to the cart screen (optional)
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const BottomBar(index: 2),
           ),
+        );
+      },
+      child: Container(
+        width: double.maxFinite,
+        padding: const EdgeInsets.symmetric(
+            vertical: fixPadding * 1.5, horizontal: fixPadding * 2.0),
+        margin: const EdgeInsets.all(fixPadding * 2.0),
+        decoration: BoxDecoration(
+          color: blackColor,
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        child: const Text(
+          "Add to Cart",
+          style: medium19White,
+          textAlign: TextAlign.center,
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   sizeInfo() {
     return Column(

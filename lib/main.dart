@@ -4,6 +4,8 @@ import 'package:page_transition/page_transition.dart';
 import 'package:pn_fl_jewellery_empire/screens/auth/login.dart';
 import 'package:pn_fl_jewellery_empire/screens/screens.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
+import 'package:provider/provider.dart'; // Import provider package
+import 'package:pn_fl_jewellery_empire/cart_provider.dart'; // Import CartProvider
 
 void main() {
   runApp(const MyApp());
@@ -12,35 +14,38 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion(
-      value: const SystemUiOverlayStyle(
+    return ChangeNotifierProvider(
+      create: (context) => CartProvider(), // Provide CartProvider to the app
+      child: AnnotatedRegion(
+        value: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark),
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Ghamloush Jewelery',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: primaryColor,
-            primary: primaryColor,
-          ),
-          scaffoldBackgroundColor: whiteColor,
-          primaryColor: primaryColor,
-          fontFamily: 'Mukta',
-          useMaterial3: true,
-          appBarTheme: const AppBarTheme(
-            surfaceTintColor: Colors.transparent,
-            systemOverlayStyle: SystemUiOverlayStyle(
-              statusBarColor: Colors.transparent,
-              statusBarIconBrightness: Brightness.dark,
+          statusBarIconBrightness: Brightness.dark,
+        ),
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Ghamloush Jewelry',
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: primaryColor,
+              primary: primaryColor,
+            ),
+            scaffoldBackgroundColor: whiteColor,
+            primaryColor: primaryColor,
+            fontFamily: 'Mukta',
+            useMaterial3: true,
+            appBarTheme: const AppBarTheme(
+              surfaceTintColor: Colors.transparent,
+              systemOverlayStyle: SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.dark,
+              ),
             ),
           ),
+          home: const LoginScreen(),
+          onGenerateRoute: routes,
         ),
-        home: const LoginScreen(),
-        onGenerateRoute: routes,
       ),
     );
   }

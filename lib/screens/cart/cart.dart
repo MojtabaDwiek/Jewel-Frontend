@@ -1,10 +1,11 @@
-import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
 import 'package:iconify_flutter_plus/icons/ph.dart';
 import 'package:iconify_flutter_plus/icons/uil.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
 import 'package:pn_fl_jewellery_empire/widget/column_builder.dart';
+import 'package:provider/provider.dart'; // Import Provider
+import 'package:pn_fl_jewellery_empire/cart_provider.dart'; // Import CartProvider
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -14,48 +15,26 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  final cartItemList = [
-    {
-      "image": "assets/home/Jewelry-1.png",
-      "name": "Silver Plated Ring",
-      "size": "48",
-      "item": 2,
-      "price": 120.00
-    },
-    {
-      "image": "assets/home/Jewelry-10.png",
-      "name": "Silver Grace Ring",
-      "size": "46",
-      "item": 1,
-      "price": 125.25
-    },
-    {
-      "image": "assets/home/Jewelry-3.png",
-      "name": "Diamond Earrings",
-      "size": "M",
-      "item": 1,
-      "price": 149.50
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final cartProvider = Provider.of<CartProvider>(context); // Access CartProvider
+
     return Scaffold(
       body: Column(
         children: [
           header(),
           Expanded(
-            child: cartItemList.isEmpty
+            child: cartProvider.cartItems.isEmpty
                 ? emptyListContent()
                 : ListView(
                     physics: const BouncingScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(fixPadding * 2.0,
                         fixPadding, fixPadding * 2.0, fixPadding * 2.0),
                     children: [
-                      cartItemListContent(),
+                      cartItemListContent(cartProvider),
                       heightSpace,
                       heightSpace,
-                      priceInfo(),
+                      weightInfo(cartProvider), // Display total weight
                       heightSpace,
                       heightSpace,
                       proceedToCheckout(),
@@ -112,7 +91,13 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  priceInfo() {
+  weightInfo(CartProvider cartProvider) {
+    // Calculate total weight
+    double totalWeight = cartProvider.cartItems.fold(
+      0,
+      (sum, item) => sum + (item.weight * item.quantity),
+    );
+
     return Container(
       width: double.maxFinite,
       decoration: BoxDecoration(
@@ -120,81 +105,36 @@ class _CartScreenState extends State<CartScreen> {
         borderRadius: BorderRadius.circular(10.0),
         border: Border.all(color: borderColor),
       ),
-      child: Column(
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(fixPadding),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    "Sub Total",
-                    style: regular16Black,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                widthSpace,
-                Text(
-                  "\$394.75",
-                  style: regular16Black,
-                )
-              ],
+      child: Padding(
+        padding: const EdgeInsets.all(fixPadding),
+        child: Row(
+          children: [
+            const Expanded(
+              child: Text(
+                "Total Weight",
+                style: semibold16Black,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-          ),
-          const Padding(
-            padding: EdgeInsets.all(fixPadding),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    "Delivery",
-                    style: regular16Black,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                widthSpace,
-                Text(
-                  "Free",
-                  style: regular16Black,
-                )
-              ],
-            ),
-          ),
-          DottedBorder(
-            dashPattern: const [5, 9],
-            color: borderColor,
-            padding: EdgeInsets.zero,
-            child: Container(
-              width: double.maxFinite,
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.all(fixPadding),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    "Total",
-                    style: semibold16Black,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                widthSpace,
-                Text(
-                  "\$394.75",
-                  style: semibold16Black,
-                )
-              ],
-            ),
-          )
-        ],
+            widthSpace,
+            Text(
+              "${totalWeight.toStringAsFixed(2)} kg", // Display total weight
+              style: semibold16Black,
+            )
+          ],
+        ),
       ),
     );
   }
 
-  cartItemListContent() {
+  cartItemListContent(CartProvider cartProvider) {
     return ColumnBuilder(
       itemBuilder: (context, index) {
+        final item = cartProvider.cartItems[index];
+
+        // Debugging: Check the imageUrl
+        print('Image URL for ${item.name}: ${item.imageUrl}');
+
         return Container(
           padding: const EdgeInsets.all(fixPadding),
           margin: const EdgeInsets.symmetric(vertical: fixPadding),
@@ -212,20 +152,37 @@ class _CartScreenState extends State<CartScreen> {
                 height: 80.0,
                 width: 85.0,
                 decoration: BoxDecoration(
-                    color: whiteColor,
-                    borderRadius: BorderRadius.circular(10.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: blackColor.withOpacity(0.1),
-                        blurRadius: 20.0,
-                        offset: const Offset(0, 10),
-                      )
-                    ]),
-                alignment: Alignment.center,
-                child: Image.asset(
-                  cartItemList[index]['image'].toString(),
-                  fit: BoxFit.cover,
+                  color: whiteColor,
+                  borderRadius: BorderRadius.circular(10.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: blackColor.withOpacity(0.1),
+                      blurRadius: 20.0,
+                      offset: const Offset(0, 10),
+                    )
+                  ],
                 ),
+                alignment: Alignment.center,
+                child: item.imageUrl.isNotEmpty
+                    ? Image.network(
+                        item.imageUrl, // Use the full URL directly
+                        fit: BoxFit.cover,
+                        height: 60.0,
+                        width: 60.0,
+                        errorBuilder: (context, error, stackTrace) {
+                          // Fallback if image cannot be loaded
+                          return const Icon(
+                            Icons.error, // Error icon
+                            size: 40.0,
+                            color: greyColor,
+                          );
+                        },
+                      )
+                    : const Icon(
+                        Icons.shopping_bag, // Fallback icon if no image
+                        size: 40.0,
+                        color: greyColor,
+                      ),
               ),
               widthSpace,
               Expanded(
@@ -240,22 +197,24 @@ class _CartScreenState extends State<CartScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                cartItemList[index]['name'].toString(),
+                                item.name, // Use the name from CartItem
                                 style: regular16Black,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               heightBox(3.0),
                               Text(
-                                "Size: ${cartItemList[index]['size']}",
+                                "Size: ${item.selectedSize}", // Use the size from CartItem
                                 style: regular14Grey,
                                 overflow: TextOverflow.ellipsis,
-                              )
+                              ),
+                              heightBox(3.0),
+                              Text(
+                                "Weight: ${item.weight.toStringAsFixed(2)} kg", // Use the weight from CartItem
+                                style: regular14Grey,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ],
                           ),
-                        ),
-                        Text(
-                          "\$${(cartItemList[index]['price'] as double).toStringAsFixed(2)}",
-                          style: regular16Black,
                         ),
                       ],
                     ),
@@ -266,36 +225,27 @@ class _CartScreenState extends State<CartScreen> {
                           child: Row(
                             children: [
                               addRemoveButton(Icons.remove, () {
-                                if ((cartItemList[index]['item'] as int) > 1) {
-                                  setState(() {
-                                    cartItemList[index]['item'] =
-                                        (cartItemList[index]['item'] as int) -
-                                            1;
-                                  });
+                                if (item.quantity > 1) {
+                                  cartProvider.updateQuantity(item, item.quantity - 1);
                                 }
                               }),
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: fixPadding * 1.5),
                                 child: Text(
-                                  cartItemList[index]['item'].toString(),
+                                  item.quantity.toString(), // Use the quantity from CartItem
                                   style: bold14Black,
                                 ),
                               ),
                               addRemoveButton(Icons.add, () {
-                                setState(() {
-                                  cartItemList[index]['item'] =
-                                      (cartItemList[index]['item'] as int) + 1;
-                                });
+                                cartProvider.updateQuantity(item, item.quantity + 1);
                               }),
                             ],
                           ),
                         ),
                         InkWell(
                           onTap: () {
-                            setState(() {
-                              cartItemList.removeAt(index);
-                            });
+                            cartProvider.removeFromCart(item);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 backgroundColor: blackColor,
@@ -322,7 +272,7 @@ class _CartScreenState extends State<CartScreen> {
           ),
         );
       },
-      itemCount: cartItemList.length,
+      itemCount: cartProvider.cartItems.length,
     );
   }
 
