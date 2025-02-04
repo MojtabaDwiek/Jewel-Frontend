@@ -118,7 +118,7 @@ class _CartScreenState extends State<CartScreen> {
             ),
             widthSpace,
             Text(
-              "${totalWeight.toStringAsFixed(2)} kg", // Display total weight
+              "${totalWeight.toStringAsFixed(2)} g", // Display total weight
               style: semibold16Black,
             )
           ],
@@ -132,9 +132,6 @@ class _CartScreenState extends State<CartScreen> {
       itemBuilder: (context, index) {
         final item = cartProvider.cartItems[index];
 
-        // Debugging: Check the imageUrl
-        print('Image URL for ${item.name}: ${item.imageUrl}');
-
         return Container(
           padding: const EdgeInsets.all(fixPadding),
           margin: const EdgeInsets.symmetric(vertical: fixPadding),
@@ -146,9 +143,9 @@ class _CartScreenState extends State<CartScreen> {
           ),
           child: Row(
             children: [
+              // Removed the image part
               Container(
                 padding: const EdgeInsets.all(fixPadding),
-                clipBehavior: Clip.hardEdge,
                 height: 80.0,
                 width: 85.0,
                 decoration: BoxDecoration(
@@ -163,26 +160,11 @@ class _CartScreenState extends State<CartScreen> {
                   ],
                 ),
                 alignment: Alignment.center,
-                child: item.imageUrl.isNotEmpty
-                    ? Image.network(
-                        item.imageUrl, // Use the full URL directly
-                        fit: BoxFit.cover,
-                        height: 60.0,
-                        width: 60.0,
-                        errorBuilder: (context, error, stackTrace) {
-                          // Fallback if image cannot be loaded
-                          return const Icon(
-                            Icons.error, // Error icon
-                            size: 40.0,
-                            color: greyColor,
-                          );
-                        },
-                      )
-                    : const Icon(
-                        Icons.shopping_bag, // Fallback icon if no image
-                        size: 40.0,
-                        color: greyColor,
-                      ),
+                child: const Icon(
+                  Icons.shopping_bag, // Placeholder icon when no image is shown
+                  size: 40.0,
+                  color: greyColor,
+                ),
               ),
               widthSpace,
               Expanded(
@@ -209,7 +191,7 @@ class _CartScreenState extends State<CartScreen> {
                               ),
                               heightBox(3.0),
                               Text(
-                                "Weight: ${item.weight.toStringAsFixed(2)} kg", // Use the weight from CartItem
+                                "Weight: ${item.weight.toStringAsFixed(2)} g", // Use the weight from CartItem
                                 style: regular14Grey,
                                 overflow: TextOverflow.ellipsis,
                               ),

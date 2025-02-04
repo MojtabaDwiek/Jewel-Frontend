@@ -35,10 +35,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final args = ModalRoute.of(context)!.settings.arguments;
     if (args != null) {
       productId = args as int; // Ensure productId is treated as int
-      print('Product ID: $productId'); // Debug statement
+      
       _fetchProductDetails();
     } else {
-      print('No product ID provided'); // Debug statement
+      
     }
   }
 
@@ -50,7 +50,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     try {
       final details = await ApiService.fetchProductDetails(productId);
-      print('Fetched product details: $details'); // Debug statement
+     
 
       // Ensure sizes and lengths are treated as List<dynamic>
       if (details['sizes'] != null) {
@@ -71,7 +71,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         });
       }
     } catch (e) {
-      print('Error fetching product details: $e'); // Debug statement
+      
       if (mounted) {
         setState(() {
           _errorMessage = 'Failed to fetch product details: $e';
@@ -87,38 +87,43 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   // Method to add product to favorites
-  Future<void> _addToFavorites() async {
-    try {
-      await ApiService.addToFavorites(productId);
-      setState(() {
-        isFavourite = true; // Mark as favorite after successful addition
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          backgroundColor: blackColor,
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(milliseconds: 1500),
-          content: Text(
-            "Added to favorites",
-            style: medium16White,
-          ),
+ Future<void> _addToFavorites() async {
+  try {
+    // Attempt to add the product to favorites
+    await ApiService.addToFavorites(productId);
+
+    setState(() {
+      isFavourite = true; // Mark as favorite after successful addition
+    });
+
+    // Show success SnackBar
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        backgroundColor: Colors.green,  // Success color
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(milliseconds: 1500),
+        content: Text(
+          "Added to favorites",
+          style: TextStyle(color: Colors.white, fontSize: 16),
         ),
-      );
-    } catch (e) {
-      // If there's an error adding to favorites
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: blackColor,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(milliseconds: 1500),
-          content: Text(
-            'Error: $e',
-            style: medium16White,
-          ),
+      ),
+    );
+  } catch (e) {
+    // If the error is due to product already being in favorites, show that message
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        backgroundColor: Colors.orange,  // Color for "already in favorites"
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(milliseconds: 1500),
+        content: Text(
+          "This product is already in your favorites.",
+          style: TextStyle(color: Colors.white, fontSize: 16),
         ),
-      );
-    }
+      ),
+    );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -166,7 +171,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           // Pass the image path directly, without constructing the URL here
           final imagePath = productDetails!['image'];  // Image path stored in productDetails
 
-          print("Product Image Path for Cart: $imagePath");  // Debugging image path
+          
 
           // Create a CartItem object with the product details
           final cartItem = CartItem(
@@ -243,7 +248,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             children: (productDetails!['sizes'] as List<dynamic>).map((size) {
               return GestureDetector(
                 onTap: () {
-                  print('Selected size: $size'); // Debug statement
+                  
                   setState(() {
                     selectedSize = productDetails!['sizes'].indexOf(size);
                   });
@@ -296,7 +301,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             children: (productDetails!['lengths'] as List<dynamic>).map((length) {
               return GestureDetector(
                 onTap: () {
-                  print('Selected length: $length'); // Debug statement
+                  
                   setState(() {
                     selectedLength = productDetails!['lengths'].indexOf(length);
                   });
@@ -352,9 +357,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
           widthSpace,
           Text(
-            productDetails!['weight'], // Display weight without $ sign
-            style: bold18Primary,
-          )
+  "${productDetails!['weight']} g", // Append "kg" after the weight
+  style: bold18Primary,
+)
+
         ],
       ),
     );
@@ -376,7 +382,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       elevation: 0.0,
       leading: IconButton(
         onPressed: () {
-          print('Back button pressed'); // Debug statement
+          
           Navigator.pop(context);
         },
         icon: const Icon(
@@ -416,7 +422,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   fit: BoxFit.cover,
                   placeholder: (context, url) => const CircularProgressIndicator(),
                   errorWidget: (context, url, error) {
-                    print('Error loading image: $error'); // Debug statement
+                    
                     return const Icon(Icons.error); // Display an error icon
                   },
                 ),
@@ -426,7 +432,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 height: size.height * 0.25, // Reduced image height
                 initialPage: currentImageIndex,
                 onPageChanged: (index, reason) {
-                  print('Image changed to index: $index'); // Debug statement
+                  
                   setState(() {
                     currentImageIndex = index;
                   });

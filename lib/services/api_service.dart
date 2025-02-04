@@ -28,7 +28,6 @@ class ApiService {
         prefs.setString('token', data['token']);
         prefs.setString('user', jsonEncode(data['user']));
 
-        print('Login successful: ${data['message']}');
 
         // Return the token and user data as a map
         return {
@@ -36,11 +35,9 @@ class ApiService {
           'user': data['user'],
         };
       } else {
-        print('Login failed: ${data['message']}');
         throw Exception(data['message']);
       }
     } catch (error) {
-      print('Login error: $error');
       rethrow; // Re-throw the error so that it can be handled in the UI
     }
   }
@@ -67,13 +64,10 @@ class ApiService {
         prefs.remove('token');
         prefs.remove('user');
 
-        print('Logout successful: ${data['message']}');
       } else {
-        print('Logout failed: ${data['message']}');
         throw Exception(data['message']);
       }
     } catch (error) {
-      print('Logout error: $error');
       rethrow;
     }
   }
@@ -136,11 +130,9 @@ class ApiService {
     }
 
     // Log the token to ensure it's correctly retrieved (for debugging)
-    print('Authorization Token: $token');
 
     // Create the request body and log it
     final body = jsonEncode({'product_id': productId});
-    print('Request Body: $body');
 
     final response = await http.post(
       Uri.parse('$baseUrl/favorites/add'),
@@ -152,16 +144,13 @@ class ApiService {
     );
 
     // Check the response and log details
-    print('Response Status Code: ${response.statusCode}');
-    print('Response Body: ${response.body}');
     
     if (response.statusCode == 200) {
-      print('Product added to favorites');
     } else {
       throw Exception('Failed to add product to favorites: ${response.statusCode}');
     }
   } catch (e) {
-    print('Error adding to favorites: $e'); // Log the error for debugging
+    // Log the error for debugging
     throw Exception('Error adding to favorites: $e');
   }
 }
@@ -183,7 +172,6 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        print('Product removed from favorites');
       } else {
         throw Exception('Failed to remove product from favorites: ${response.statusCode}');
       }

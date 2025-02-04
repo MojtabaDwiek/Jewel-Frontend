@@ -27,26 +27,35 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _fetchProducts() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
+  if (!mounted) return; // Ensure the widget is still mounted before proceeding
+  
+  setState(() {
+    _isLoading = true;
+    _errorMessage = '';
+  });
 
-    try {
-      final products = await ApiService.fetchProducts(); // Fetch all products
+  try {
+    final products = await ApiService.fetchProducts(); // Fetch all products
+    if (mounted) {
       setState(() {
         _allProducts = products;
       });
-    } catch (e) {
+    }
+  } catch (e) {
+    if (mounted) {
       setState(() {
         _errorMessage = 'Failed to fetch products: $e';
       });
-    } finally {
+    }
+  } finally {
+    if (mounted) {
       setState(() {
         _isLoading = false;
       });
     }
   }
+}
+
 
   void _performSearch(String query) {
     setState(() {
@@ -166,7 +175,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        '${product['weight']}', // Display weight
+                        '${product['weight']} g', // Display weight
                         style: semibold16Black,
                         overflow: TextOverflow.ellipsis,
                       )
@@ -250,7 +259,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                               Text(
-                                '${product['weight']}', // Display weight
+                                '${product['weight']} g', // Display weight
                                 style: semibold16Black,
                                 overflow: TextOverflow.ellipsis,
                               )

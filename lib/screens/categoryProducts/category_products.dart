@@ -28,29 +28,44 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   }
 
   Future<void> _fetchCategoryProducts() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
+  // Start by setting the loading state
+  setState(() {
+    _isLoading = true;
+    _errorMessage = '';
+  });
 
-    try {
-      final products = await ApiService.fetchProducts(); // Fetch all products
-      // Filter products by the selected category
+  try {
+    // Fetch all products from the API
+    final products = await ApiService.fetchProducts();
+
+    // Ensure we only display products that belong to the selected category
+    final filteredProducts = products.where((product) {
+      return product['category'] == categoryName;
+    }).toList();
+
+    // Only call setState if the widget is still mounted
+    if (mounted) {
       setState(() {
-        _categoryProducts = products
-            .where((product) => product['category'] == categoryName)
-            .toList();
+        _categoryProducts = filteredProducts;
       });
-    } catch (e) {
+    }
+  } catch (e) {
+    // Update error message if there's an issue with fetching products
+    if (mounted) {
       setState(() {
         _errorMessage = 'Failed to fetch products: $e';
       });
-    } finally {
+    }
+  } finally {
+    // Set loading state to false after fetching is complete
+    if (mounted) {
       setState(() {
         _isLoading = false;
       });
     }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

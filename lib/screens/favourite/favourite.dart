@@ -15,6 +15,7 @@ class FavouriteScreen extends StatefulWidget {
 
 class _FavouriteScreenState extends State<FavouriteScreen> {
   List<dynamic> favouriteList = [];
+  bool _isLoading = true;  // New state variable to track loading
 
   @override
   void initState() {
@@ -31,13 +32,17 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
       }
 
       final favorites = await ApiService.viewFavorites(); // Use ApiService to fetch favorites
-      print("Favorites: $favorites"); // Debugging to check if the API response is correct
+      // Debugging to check if the API response is correct
+
       setState(() {
         // Extracting product data from the response and updating the favouriteList
         favouriteList = favorites.map((favorite) => favorite['product']).toList();
+        _isLoading = false;  // Set loading to false when data is fetched
       });
     } catch (e) {
-      print('Error fetching favorites: $e');
+      setState(() {
+        _isLoading = false;  // Stop loading if there's an error
+      });
     }
   }
 
@@ -65,8 +70,8 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
           ),
         ),
       );
+    // ignore: empty_catches
     } catch (e) {
-      print('Error removing from favorites: $e');
     }
   }
 
@@ -75,7 +80,7 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
     if (token == null) {
-      print("No token found");
+      
       return null;
     }
     return token;
@@ -88,11 +93,22 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
         children: [
           _header(),
           Expanded(
-            child: favouriteList.isEmpty
-                ? _emptyListContent()
+            child: _isLoading 
+              ? _loadingIndicator()  // Show loading indicator if data is still being fetched
+              : favouriteList.isEmpty 
+                ? _emptyListContent() 
                 : _favouriteListContent(),
           ),
         ],
+      ),
+    );
+  }
+
+  // Loading Indicator
+  Widget _loadingIndicator() {
+    return const Center(
+      child: CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(primaryColor), // Adjust this to your theme color
       ),
     );
   }

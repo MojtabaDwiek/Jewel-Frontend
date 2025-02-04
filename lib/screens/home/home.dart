@@ -49,27 +49,38 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchProducts() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
+  setState(() {
+    _isLoading = true;
+    _errorMessage = '';
+  });
 
-    try {
-      final products = await ApiService.fetchProducts();
+  try {
+    final products = await ApiService.fetchProducts();
+
+    // Check if the widget is still mounted before updating state
+    if (mounted) {
       setState(() {
         _recommendedList = products; // Assign fetched products to recommended list
         _popularList = products; // Assign fetched products to popular list
       });
-    } catch (e) {
+    }
+  } catch (e) {
+    // Check if the widget is still mounted before updating state
+    if (mounted) {
       setState(() {
         _errorMessage = 'Failed to fetch products: $e';
       });
-    } finally {
+    }
+  } finally {
+    // Check if the widget is still mounted before updating state
+    if (mounted) {
       setState(() {
         _isLoading = false;
       });
     }
   }
+}
+
 
   // Logout functionality
   Future<void> _logout() async {
@@ -249,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                               Text(
-                                '${product['weight']}', // Display weight
+                                '${product['weight']} g', // Display weight
                                 style: semibold16Black,
                                 overflow: TextOverflow.ellipsis,
                               )
@@ -336,7 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            '${product['weight']}', // Display weight
+                            '${product['weight']} g', // Display weight
                             style: semibold16Black,
                             overflow: TextOverflow.ellipsis,
                           )
