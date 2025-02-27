@@ -6,14 +6,15 @@ class CartProvider with ChangeNotifier {
 
   List<CartItem> get cartItems => _cartItems;
 
-  // Modify the addToCart method to properly set the imageUrl when adding items
+  // Modify the addToCart method to include carat and handle nullable imageUrl
   void addToCart(CartItem item) {
     // Check if the item already exists in the cart
     final existingItem = _cartItems.firstWhere(
       (cartItem) =>
           cartItem.id == item.id &&
           cartItem.selectedSize == item.selectedSize &&
-          cartItem.selectedLength == item.selectedLength,
+          cartItem.selectedLength == item.selectedLength &&
+          cartItem.carat == item.carat, // Include carat in the comparison
       orElse: () => CartItem(
         id: '',
         name: '',
@@ -21,7 +22,9 @@ class CartProvider with ChangeNotifier {
         weight: 0,
         selectedSize: '',
         selectedLength: '',
-        imageUrl: item.imageUrl, // Make sure imageUrl is set here
+        carat: item.carat, // Include carat here
+        imageUrl: item.imageUrl, // Include imageUrl (nullable)
+        quantity: 0,
       ),
     );
 
@@ -29,7 +32,7 @@ class CartProvider with ChangeNotifier {
       // If it exists, update the quantity
       existingItem.quantity += item.quantity;
     } else {
-      // Otherwise, add a new item with the provided imageUrl
+      // Otherwise, add a new item with the provided carat and imageUrl
       _cartItems.add(item);
     }
 

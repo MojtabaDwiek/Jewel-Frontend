@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     {"image": "assets/home/Jewelry-3.png", "title": "خواتم"},
   ];
 
-  List<dynamic> _recommendedList = [];
+  
   List<dynamic> _popularList = [];
   bool _isLoading = false;
   String _errorMessage = '';
@@ -60,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Check if the widget is still mounted before updating state
     if (mounted) {
       setState(() {
-        _recommendedList = products; // Assign fetched products to recommended list
+        
         _popularList = products; // Assign fetched products to popular list
       });
     }
@@ -123,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             categoryListContent(),
                             heightSpace,
                             heightSpace,
-                            recommendedForYou(),
+                            
                             heightSpace,
                             heightSpace,
                             popularListContent(),
@@ -197,172 +197,104 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget recommendedForYou() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        title("Recommended for You"),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.all(fixPadding),
-          child: Row(
-            children: List.generate(
-              _recommendedList.length,
-              (index) {
-                final product = _recommendedList[index];
-                final imageUrl = 'http://192.168.0.104:8000/storage/${product['image']}'; // Construct full URL
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/productDetail',
-                      arguments: product['id'], // Pass the product ID
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
-                    width: 158.0,
-                    margin: const EdgeInsets.symmetric(horizontal: fixPadding),
-                    decoration: BoxDecoration(
-                      color: whiteColor,
-                      borderRadius: BorderRadius.circular(10.0),
-                      border: Border.all(color: borderColor),
+  
+
+  Widget popularListContent() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      title("Popular"),
+      GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(
+            fixPadding * 2.0, fixPadding, fixPadding * 2.0, fixPadding * 2.0),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: fixPadding * 2.0,
+          crossAxisSpacing: fixPadding * 2.0,
+          childAspectRatio: 0.8,
+        ),
+        itemCount: _popularList.length,
+        itemBuilder: (context, index) {
+          final product = _popularList[index];
+
+          // Ensure that the 'images' field is not null or empty
+          List<String> imageUrls = [];
+          if (product['images'] != null && product['images'].isNotEmpty) {
+            imageUrls = List<String>.from(product['images']);
+          }
+
+          // If no images are available, show a fallback image
+          String imageUrl = imageUrls.isNotEmpty
+              ? 'http://192.168.0.110:8000/storage/${imageUrls[0]}'
+              : 'http://192.168.0.110:8000/storage/default_image.png'; // Use a fallback image
+
+          return GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(
+                context,
+                '/productDetail',
+                arguments: product['id'], // Pass the product ID
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
+              width: double.maxFinite,
+              decoration: BoxDecoration(
+                color: whiteColor,
+                borderRadius: BorderRadius.circular(10.0),
+                border: Border.all(color: borderColor),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: CachedNetworkImage(
+                        imageUrl: imageUrl, // Display the first image in the array
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const CircularProgressIndicator(),
+                        errorWidget: (context, url, error) {
+                          return const Icon(Icons.error); // Display an error icon
+                        },
+                      ),
                     ),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
+                    width: double.maxFinite,
+                    height: 1.0,
+                    color: borderColor,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: fixPadding),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Center(
-                          child: CachedNetworkImage(
-                            imageUrl: imageUrl, // Use the constructed URL
-                            height: 95.0,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => const CircularProgressIndicator(),
-                            errorWidget: (context, url, error) {
-                              return const Icon(Icons.error); // Display an error icon
-                            },
-                          ),
+                        Text(
+                          product['name'],
+                          style: regular16Black,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        Container(
-                          margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
-                          width: double.maxFinite,
-                          height: 1.0,
-                          color: borderColor,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: fixPadding),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                product['name'],
-                                style: regular16Black,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                '${product['weight']} g', // Display weight
-                                style: semibold16Black,
-                                overflow: TextOverflow.ellipsis,
-                              )
-                            ],
-                          ),
+                        Text(
+                          '${product['weight']} g', // Display weight
+                          style: semibold16Black,
+                          overflow: TextOverflow.ellipsis,
                         )
                       ],
                     ),
-                  ),
-                );
-              },
-            ),
-          ),
-        )
-      ],
-    );
-  }
-
-  Widget popularListContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        title("Popular"),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(
-              fixPadding * 2.0, fixPadding, fixPadding * 2.0, fixPadding * 2.0),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: fixPadding * 2.0,
-            crossAxisSpacing: fixPadding * 2.0,
-            childAspectRatio: 0.8,
-          ),
-          itemCount: _popularList.length,
-          itemBuilder: (context, index) {
-            final product = _popularList[index];
-            final imageUrl = 'http://192.168.0.104:8000/storage/${product['image']}'; // Construct full URL
-            return GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  '/productDetail',
-                  arguments: product['id'], // Pass the product ID
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
-                width: double.maxFinite,
-                decoration: BoxDecoration(
-                  color: whiteColor,
-                  borderRadius: BorderRadius.circular(10.0),
-                  border: Border.all(color: borderColor),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Center(
-                        child: CachedNetworkImage(
-                          imageUrl: imageUrl, // Use the constructed URL
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => const CircularProgressIndicator(),
-                          errorWidget: (context, url, error) {
-                            return const Icon(Icons.error); // Display an error icon
-                          },
-                        ),
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
-                      width: double.maxFinite,
-                      height: 1.0,
-                      color: borderColor,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: fixPadding),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            product['name'],
-                            style: regular16Black,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            '${product['weight']} g', // Display weight
-                            style: semibold16Black,
-                            overflow: TextOverflow.ellipsis,
-                          )
-                        ],
-                      ),
-                    )
-                  ],
-                ),
+                  )
+                ],
               ),
-            );
-          },
-        )
-      ],
-    );
-  }
+            ),
+          );
+        },
+      )
+    ],
+  );
+}
+
 
   Widget title(String title) {
     return Padding(

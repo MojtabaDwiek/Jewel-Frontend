@@ -27,35 +27,34 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _fetchProducts() async {
-  if (!mounted) return; // Ensure the widget is still mounted before proceeding
-  
-  setState(() {
-    _isLoading = true;
-    _errorMessage = '';
-  });
+    if (!mounted) return; // Ensure the widget is still mounted before proceeding
 
-  try {
-    final products = await ApiService.fetchProducts(); // Fetch all products
-    if (mounted) {
-      setState(() {
-        _allProducts = products;
-      });
-    }
-  } catch (e) {
-    if (mounted) {
-      setState(() {
-        _errorMessage = 'Failed to fetch products: $e';
-      });
-    }
-  } finally {
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      final products = await ApiService.fetchProducts(); // Fetch all products
+      if (mounted) {
+        setState(() {
+          _allProducts = products;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to fetch products: $e';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
-}
-
 
   void _performSearch(String query) {
     setState(() {
@@ -107,7 +106,7 @@ class _SearchScreenState extends State<SearchScreen> {
         heightSpace,
         heightSpace,
         heightSpace,
-        recommendedForYou(),
+        popularListContent(), // Replaced recommendedForYou() with popularListContent()
       ],
     );
   }
@@ -126,7 +125,7 @@ class _SearchScreenState extends State<SearchScreen> {
       itemCount: _searchResults.length,
       itemBuilder: (context, index) {
         final product = _searchResults[index];
-        final imageUrl = 'http://192.168.0.104:8000/storage/${product['image']}'; // Construct full URL
+        final imageUrl = 'http://192.168.0.110:8000/storage/${product['image']}'; // Construct full URL
         return GestureDetector(
           onTap: () {
             Navigator.pushNamed(
@@ -190,89 +189,103 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget recommendedForYou() {
+  Widget popularListContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
           child: Text(
-            "Recommended for You",
+            "Popular",
             style: semibold18Black,
           ),
         ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.all(fixPadding),
-          child: Row(
-            children: List.generate(
-              _allProducts.length,
-              (index) {
-                final product = _allProducts[index];
-                final imageUrl = 'http://192.168.0.104:8000/storage/${product['image']}'; // Construct full URL
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/productDetail',
-                      arguments: product['id'], // Pass the product ID
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
-                    width: 158.0,
-                    margin: const EdgeInsets.symmetric(horizontal: fixPadding),
-                    decoration: BoxDecoration(
-                      color: whiteColor,
-                      borderRadius: BorderRadius.circular(10.0),
-                      border: Border.all(color: borderColor),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: CachedNetworkImage(
-                            imageUrl: imageUrl, // Use the constructed URL
-                            height: 95.0,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => const CircularProgressIndicator(),
-                            errorWidget: (context, url, error) {
-                              return const Icon(Icons.error); // Display an error icon
-                            },
-                          ),
-                        ),
-                        Container(
-                          margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
-                          width: double.maxFinite,
-                          height: 1.0,
-                          color: borderColor,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: fixPadding),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                product['name'],
-                                style: regular16Black,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                '${product['weight']} g', // Display weight
-                                style: semibold16Black,
-                                overflow: TextOverflow.ellipsis,
-                              )
-                            ],
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+              fixPadding * 2.0, fixPadding, fixPadding * 2.0, fixPadding * 2.0),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: fixPadding * 2.0,
+            crossAxisSpacing: fixPadding * 2.0,
+            childAspectRatio: 0.8,
+          ),
+          itemCount: _allProducts.length,
+          itemBuilder: (context, index) {
+            final product = _allProducts[index];
+
+            // Ensure that the 'images' field is not null or empty
+            List<String> imageUrls = [];
+            if (product['images'] != null && product['images'].isNotEmpty) {
+              imageUrls = List<String>.from(product['images']);
+            }
+
+            // If no images are available, show a fallback image
+            String imageUrl = imageUrls.isNotEmpty
+                ? 'http://192.168.0.110:8000/storage/${imageUrls[0]}'
+                : 'http://192.168.0.110:8000/storage/default_image.png'; // Use a fallback image
+
+            return GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/productDetail',
+                  arguments: product['id'], // Pass the product ID
                 );
               },
-            ),
-          ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
+                width: double.maxFinite,
+                decoration: BoxDecoration(
+                  color: whiteColor,
+                  borderRadius: BorderRadius.circular(10.0),
+                  border: Border.all(color: borderColor),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Center(
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl, // Display the first image in the array
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const CircularProgressIndicator(),
+                          errorWidget: (context, url, error) {
+                            return const Icon(Icons.error); // Display an error icon
+                          },
+                        ),
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
+                      width: double.maxFinite,
+                      height: 1.0,
+                      color: borderColor,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: fixPadding),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            product['name'],
+                            style: regular16Black,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '${product['weight']} g', // Display weight
+                            style: semibold16Black,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            );
+          },
         )
       ],
     );

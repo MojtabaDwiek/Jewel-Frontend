@@ -184,14 +184,31 @@ class _CartScreenState extends State<CartScreen> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                               heightBox(3.0),
+                              // Display size only if it's not null
+                              if (item.selectedSize != null)
+                                Text(
+                                  "Size: ${item.selectedSize}", // Use the size from CartItem
+                                  style: regular14Grey,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              heightBox(3.0),
+                              // Display length only if it's not null
+                              if (item.selectedLength != null)
+                                Text(
+                                  "Length: ${item.selectedLength}", // Use the length from CartItem
+                                  style: regular14Grey,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              heightBox(3.0),
                               Text(
-                                "Size: ${item.selectedSize}", // Use the size from CartItem
+                                "Weight: ${item.weight.toStringAsFixed(2)} g", // Use the weight from CartItem
                                 style: regular14Grey,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               heightBox(3.0),
+                              // Display carat only if it's not null
                               Text(
-                                "Weight: ${item.weight.toStringAsFixed(2)} g", // Use the weight from CartItem
+                                "Carat: ${item.carat} ct", // Use the carat from CartItem
                                 style: regular14Grey,
                                 overflow: TextOverflow.ellipsis,
                               ),

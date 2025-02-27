@@ -15,7 +15,7 @@ class FavouriteScreen extends StatefulWidget {
 
 class _FavouriteScreenState extends State<FavouriteScreen> {
   List<dynamic> favouriteList = [];
-  bool _isLoading = true;  // New state variable to track loading
+  bool _isLoading = true; // New state variable to track loading
 
   @override
   void initState() {
@@ -37,11 +37,11 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
       setState(() {
         // Extracting product data from the response and updating the favouriteList
         favouriteList = favorites.map((favorite) => favorite['product']).toList();
-        _isLoading = false;  // Set loading to false when data is fetched
+        _isLoading = false; // Set loading to false when data is fetched
       });
     } catch (e) {
       setState(() {
-        _isLoading = false;  // Stop loading if there's an error
+        _isLoading = false; // Stop loading if there's an error
       });
     }
   }
@@ -70,9 +70,8 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
           ),
         ),
       );
-    // ignore: empty_catches
-    } catch (e) {
-    }
+      // ignore: empty_catches
+    } catch (e) {}
   }
 
   // Function to get the token from SharedPreferences
@@ -80,7 +79,6 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
     if (token == null) {
-      
       return null;
     }
     return token;
@@ -93,11 +91,11 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
         children: [
           _header(),
           Expanded(
-            child: _isLoading 
-              ? _loadingIndicator()  // Show loading indicator if data is still being fetched
-              : favouriteList.isEmpty 
-                ? _emptyListContent() 
-                : _favouriteListContent(),
+            child: _isLoading
+                ? _loadingIndicator() // Show loading indicator if data is still being fetched
+                : favouriteList.isEmpty
+                    ? _emptyListContent()
+                    : _favouriteListContent(),
           ),
         ],
       ),
@@ -105,13 +103,14 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
   }
 
   // Loading Indicator
-  Widget _loadingIndicator() {
-    return const Center(
-      child: CircularProgressIndicator(
-        valueColor: AlwaysStoppedAnimation<Color>(primaryColor), // Adjust this to your theme color
-      ),
-    );
-  }
+ Widget _loadingIndicator() {
+  return const Center(
+    child: CircularProgressIndicator(
+      valueColor: AlwaysStoppedAnimation<Color>(primaryColor), // Adjust this to your theme color
+    ),
+  );
+}
+
 
   Widget _emptyListContent() {
     return Center(
@@ -145,73 +144,72 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
         crossAxisCount: 2,
         mainAxisSpacing: fixPadding * 2.0,
         crossAxisSpacing: fixPadding * 2.0,
-        childAspectRatio: 0.75, // Adjusted for better proportions
+        childAspectRatio: 0.8, // Adjusted for better proportions
       ),
       itemBuilder: (context, index) {
         final product = favouriteList[index];
-        final imageUrl = 'http://192.168.0.104:8000/storage/${product['image']}';
+
+        // Ensure that the 'images' field is not null or empty
+        List<String> imageUrls = [];
+        if (product['images'] != null && product['images'].isNotEmpty) {
+          imageUrls = List<String>.from(product['images']);
+        }
+
+        // If no images are available, show a fallback image
+        String imageUrl = imageUrls.isNotEmpty
+            ? 'http://192.168.0.110:8000/storage/${imageUrls[0]}' // Use the first image
+            : 'http://192.168.0.110:8000/storage/default_image.png'; // Fallback image
 
         return GestureDetector(
           onTap: () {
             Navigator.pushNamed(
               context,
               '/productDetail',
-              arguments: product['id'],
+              arguments: product['id'], // Pass the product ID
             );
           },
           child: Container(
             decoration: BoxDecoration(
               color: whiteColor,
-              borderRadius: BorderRadius.circular(12.0), // Rounded corners
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 6.0,
-                  offset: const Offset(0, 2), // Subtle shadow
-                ),
-              ],
+              borderRadius: BorderRadius.circular(10.0),
+              border: Border.all(color: borderColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Product Image
                 Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(12.0), // Rounded top corners
-                    ),
+                  child: Center(
                     child: CachedNetworkImage(
-                      imageUrl: imageUrl,
+                      imageUrl: imageUrl, // Display the first image in the array
                       fit: BoxFit.cover,
-                      width: double.infinity,
-                      placeholder: (context, url) => const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                      errorWidget: (context, url, error) => const Icon(
-                        Icons.error,
-                        color: Colors.red,
-                      ),
+                      placeholder: (context, url) => const CircularProgressIndicator(), // Loading indicator
+                      errorWidget: (context, url, error) {
+                        return const Icon(Icons.error); // Display an error icon
+                      },
                     ),
                   ),
                 ),
-                // Product Details
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
+                  width: double.maxFinite,
+                  height: 1.0,
+                  color: borderColor, // Add a divider
+                ),
                 Padding(
-                  padding: const EdgeInsets.all(fixPadding),
+                  padding: const EdgeInsets.symmetric(horizontal: fixPadding),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        product['name'] ?? "Unknown Product",
+                        product['name'], // Display product name
                         style: regular16Black,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis, // Handle overflow
                       ),
-                      const SizedBox(height: 4.0), // Spacing
                       Text(
-                        "${product['weight'] ?? 'N/A'}",
+                        '${product['weight']} g', // Display product weight
                         style: semibold16Black,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                        overflow: TextOverflow.ellipsis, // Handle overflow
+                      )
                     ],
                   ),
                 ),

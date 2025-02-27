@@ -1,21 +1,23 @@
 class CartItem {
-  final String id; // Product ID
-  final String name; // Product name
-  final String category; // Product category
-  final double weight; // Product weight
-  final String selectedSize; // Selected size
-  final String selectedLength; // Selected length
-  final String imageUrl; // Image URL for the product
-  int quantity; // Quantity of the product
+  final String id; // Product ID (non-nullable)
+  final String name; // Product name (non-nullable)
+  final String category; // Product category (non-nullable)
+  final double weight; // Product weight (non-nullable)
+  final String? selectedSize; // Selected size (nullable)
+  final String? selectedLength; // Selected length (nullable)
+  final double carat; // Carat value (nullable)
+  final String? imageUrl; // Image URL for the product (non-nullable)
+  int quantity; // Quantity of the product (non-nullable, default is 1)
 
   CartItem({
     required this.id,
     required this.name,
     required this.category,
     required this.weight,
-    required this.selectedSize,
-    required this.selectedLength,
-    required this.imageUrl, // Adding image URL to the constructor
+    this.selectedSize, // Nullable size
+    this.selectedLength, // Nullable length
+    required this.carat, // Nullable carat
+    this.imageUrl, // Image URL is required (non-nullable)
     this.quantity = 1, // Default quantity is 1
   });
 }

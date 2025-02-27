@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.0.104:8000/api'; // Use HTTP for local development
+  static const String baseUrl = 'http://192.168.0.110:8000/api'; // Use HTTP for local development
 
   // Helper method to get the token from SharedPreferences
   static Future<String?> _getToken() async {
@@ -97,27 +97,42 @@ class ApiService {
 
   // Fetch a single product by ID
   static Future<Map<String, dynamic>> fetchProductDetails(int productId) async {
-    final url = Uri.parse('$baseUrl/products/$productId');
-    try {
-      final response = await http.get(url);
+  final url = Uri.parse('$baseUrl/products/$productId');
+  try {
+    final response = await http.get(url);
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> product = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> product = jsonDecode(response.body);
 
-        // Decode sizes and lengths from JSON-encoded strings
-        product['sizes'] = jsonDecode(product['sizes']) as List<dynamic>;
-        product['lengths'] = jsonDecode(product['lengths']) as List<dynamic>;
-
-        return product;
-      } else if (response.statusCode == 404) {
-        throw Exception('Product not found');
+      // Check if sizes is not null and a string, then decode it
+      if (product['sizes'] != null) {
+        if (product['sizes'] is String) {
+          product['sizes'] = jsonDecode(product['sizes']) as List<dynamic>;
+        }
       } else {
-        throw Exception('Failed to fetch product: ${response.statusCode}');
+        product['sizes'] = []; // If sizes is null, set it as an empty list
       }
-    } catch (e) {
-      throw Exception('Network error: $e');
+
+      // Check if lengths is not null and a string, then decode it
+      if (product['lengths'] != null) {
+        if (product['lengths'] is String) {
+          product['lengths'] = jsonDecode(product['lengths']) as List<dynamic>;
+        }
+      } else {
+        product['lengths'] = []; // If lengths is null, set it as an empty list
+      }
+
+      return product;
+    } else if (response.statusCode == 404) {
+      throw Exception('Product not found');
+    } else {
+      throw Exception('Failed to fetch product: ${response.statusCode}');
     }
+  } catch (e) {
+    throw Exception('Network error: $e');
   }
+}
+
 
   // Add a product to favorites
   static Future<void> addToFavorites(int productId) async {

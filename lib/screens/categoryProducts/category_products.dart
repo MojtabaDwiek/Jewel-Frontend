@@ -28,44 +28,43 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   }
 
   Future<void> _fetchCategoryProducts() async {
-  // Start by setting the loading state
-  setState(() {
-    _isLoading = true;
-    _errorMessage = '';
-  });
+    // Start by setting the loading state
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
 
-  try {
-    // Fetch all products from the API
-    final products = await ApiService.fetchProducts();
+    try {
+      // Fetch all products from the API
+      final products = await ApiService.fetchProducts();
 
-    // Ensure we only display products that belong to the selected category
-    final filteredProducts = products.where((product) {
-      return product['category'] == categoryName;
-    }).toList();
+      // Ensure we only display products that belong to the selected category
+      final filteredProducts = products.where((product) {
+        return product['category'] == categoryName;
+      }).toList();
 
-    // Only call setState if the widget is still mounted
-    if (mounted) {
-      setState(() {
-        _categoryProducts = filteredProducts;
-      });
-    }
-  } catch (e) {
-    // Update error message if there's an issue with fetching products
-    if (mounted) {
-      setState(() {
-        _errorMessage = 'Failed to fetch products: $e';
-      });
-    }
-  } finally {
-    // Set loading state to false after fetching is complete
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+      // Only call setState if the widget is still mounted
+      if (mounted) {
+        setState(() {
+          _categoryProducts = filteredProducts;
+        });
+      }
+    } catch (e) {
+      // Update error message if there's an issue with fetching products
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to fetch products: $e';
+        });
+      }
+    } finally {
+      // Set loading state to false after fetching is complete
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -82,18 +81,19 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                         style: const TextStyle(color: Colors.red, fontSize: 16),
                       ),
                     )
-                  : productListContent(),
+                  : popularListContent(), // Use the updated method here
         ],
       ),
     );
   }
 
-  Widget productListContent() {
+  Widget popularListContent() {
     return Expanded(
       child: GridView.builder(
         shrinkWrap: true,
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(fixPadding * 2.0),
+        padding: const EdgeInsets.fromLTRB(
+            fixPadding * 2.0, fixPadding, fixPadding * 2.0, fixPadding * 2.0),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           mainAxisSpacing: fixPadding * 2.0,
@@ -103,10 +103,21 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
         itemCount: _categoryProducts.length,
         itemBuilder: (context, index) {
           final product = _categoryProducts[index];
-          final imageUrl =
-              'http://192.168.0.104:8000/storage/${product['image']}'; // Construct full URL
+
+          // Ensure that the 'images' field is not null or empty
+          List<String> imageUrls = [];
+          if (product['images'] != null && product['images'].isNotEmpty) {
+            imageUrls = List<String>.from(product['images']);
+          }
+
+          // If no images are available, show a fallback image
+          String imageUrl = imageUrls.isNotEmpty
+              ? 'http://192.168.0.110:8000/storage/${imageUrls[0]}' // Use the first image
+              : 'http://192.168.0.110:8000/storage/default_image.png'; // Fallback image
+
           return GestureDetector(
             onTap: () {
+              // Navigate to the product detail screen with the product ID
               Navigator.pushNamed(
                 context,
                 '/productDetail',
@@ -127,10 +138,9 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                   Expanded(
                     child: Center(
                       child: CachedNetworkImage(
-                        imageUrl: imageUrl, // Use the constructed URL
+                        imageUrl: imageUrl, // Display the first image in the array
                         fit: BoxFit.cover,
-                        placeholder: (context, url) =>
-                            const CircularProgressIndicator(),
+                        placeholder: (context, url) => const CircularProgressIndicator(), // Loading indicator
                         errorWidget: (context, url, error) {
                           return const Icon(Icons.error); // Display an error icon
                         },
@@ -138,11 +148,10 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                     ),
                   ),
                   Container(
-                    margin:
-                        const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
+                    margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
                     width: double.maxFinite,
                     height: 1.0,
-                    color: borderColor,
+                    color: borderColor, // Add a divider
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: fixPadding),
@@ -150,14 +159,14 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          product['name'],
+                          product['name'], // Display product name
                           style: regular16Black,
-                          overflow: TextOverflow.ellipsis,
+                          overflow: TextOverflow.ellipsis, // Handle overflow
                         ),
                         Text(
-                          '${product['weight']}', // Display weight
+                          '${product['weight']} g', // Display product weight
                           style: semibold16Black,
-                          overflow: TextOverflow.ellipsis,
+                          overflow: TextOverflow.ellipsis, // Handle overflow
                         )
                       ],
                     ),

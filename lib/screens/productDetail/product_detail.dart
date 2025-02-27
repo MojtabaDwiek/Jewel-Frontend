@@ -21,8 +21,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int currentImageIndex = 0;
   bool isFavourite = false;
   final sizeList = ["46", "48", "50", "52", "56", "58", "60"];
-  int selectedSize = 1;
-  int selectedLength = 1; // Added for lengths functionality
+  int selectedSize = 0; // Default to the first size
+  int selectedLength = 0; // Default to the first length
 
   late int productId; // Change to int
   Map<String, dynamic>? productDetails;
@@ -35,10 +35,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final args = ModalRoute.of(context)!.settings.arguments;
     if (args != null) {
       productId = args as int; // Ensure productId is treated as int
-      
       _fetchProductDetails();
     } else {
-      
+      setState(() {
+        _errorMessage = 'Product ID is missing.';
+      });
     }
   }
 
@@ -49,81 +50,87 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     });
 
     try {
+      // Fetching product details from the API
       final details = await ApiService.fetchProductDetails(productId);
-     
 
-      // Ensure sizes and lengths are treated as List<dynamic>
-      if (details['sizes'] != null) {
-        details['sizes'] = details['sizes'] as List<dynamic>;
-      } else {
-        details['sizes'] = []; // Default to an empty list if sizes is null
+      // Ensure sizes and lengths are treated as List<dynamic> if they exist
+      details['sizes'] = details['sizes'] != null
+          ? List<String>.from(details['sizes'] as List<dynamic>)
+          : []; // Default to an empty list if sizes is null
+
+      details['lengths'] = details['lengths'] != null
+          ? List<String>.from(details['lengths'] as List<dynamic>)
+          : []; // Default to an empty list if lengths is null
+
+      // Reset selectedSize and selectedLength if the lists are empty
+      if (details['sizes'].isEmpty) {
+        selectedSize = -1; // No valid size selected
       }
 
-      if (details['lengths'] != null) {
-        details['lengths'] = details['lengths'] as List<dynamic>;
-      } else {
-        details['lengths'] = []; // Default to an empty list if lengths is null
+      if (details['lengths'].isEmpty) {
+        selectedLength = -1; // No valid length selected
       }
 
+      // Checking if the data is fetched successfully and mounted before updating the UI
       if (mounted) {
         setState(() {
-          productDetails = details;
+          productDetails = details; // Save the fetched product details to state
         });
       }
     } catch (e) {
-      
+      // Handling any error that occurs during the fetch process
       if (mounted) {
         setState(() {
-          _errorMessage = 'Failed to fetch product details: $e';
+          _errorMessage = 'Failed to fetch product details: $e'; // Set the error message
         });
       }
     } finally {
+      // Ensuring that the loading state is stopped, even if there's an error
       if (mounted) {
         setState(() {
-          _isLoading = false;
+          _isLoading = false; // Stop loading spinner after data fetch
         });
       }
     }
   }
 
   // Method to add product to favorites
- Future<void> _addToFavorites() async {
-  try {
-    // Attempt to add the product to favorites
-    await ApiService.addToFavorites(productId);
+  Future<void> _addToFavorites() async {
+    try {
+      // Attempt to add the product to favorites
+      await ApiService.addToFavorites(productId);
 
-    setState(() {
-      isFavourite = true; // Mark as favorite after successful addition
-    });
+      setState(() {
+        isFavourite = true; // Mark as favorite after successful addition
+      });
 
-    // Show success SnackBar
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        backgroundColor: Colors.green,  // Success color
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(milliseconds: 1500),
-        content: Text(
-          "Added to favorites",
-          style: TextStyle(color: Colors.white, fontSize: 16),
+      // Show success SnackBar
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.green, // Success color
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(milliseconds: 1500),
+          content: Text(
+            "Added to favorites",
+            style: TextStyle(color: Colors.white, fontSize: 16),
+          ),
         ),
-      ),
-    );
-  } catch (e) {
-    // If the error is due to product already being in favorites, show that message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        backgroundColor: Colors.orange,  // Color for "already in favorites"
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(milliseconds: 1500),
-        content: Text(
-          "This product is already in your favorites.",
-          style: TextStyle(color: Colors.white, fontSize: 16),
+      );
+    } catch (e) {
+      // If the error is due to product already being in favorites, show that message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.orange, // Color for "already in favorites"
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(milliseconds: 1500),
+          content: Text(
+            "This product is already in your favorites.",
+            style: TextStyle(color: Colors.white, fontSize: 16),
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -142,15 +149,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         [
                           heightSpace,
                           heightSpace,
-                          jewelryInfo(),
+                          jewelryInfo(), // Display jewelry info, now includes weight and carat
                           heightSpace,
                           heightSpace,
-                          sizeInfo(),
-                          if (productDetails!['lengths'] != null &&
-                              productDetails!['lengths'].isNotEmpty) ...[
+                          // Only show sizeInfo if sizes is not null and not empty
+                          if (productDetails!['sizes'] != null && productDetails!['sizes'].isNotEmpty) ...[
+                            sizeInfo(),
                             heightSpace,
                             heightSpace,
+                          ],
+                          // Only show lengths if lengths is not null or empty
+                          if (productDetails!['lengths'] != null && productDetails!['lengths'].isNotEmpty) ...[
                             lengthsInfo(),
+                            heightSpace,
+                            heightSpace,
                           ],
                         ],
                       ),
@@ -161,29 +173,52 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
- addToCartButton() {
-    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+ Widget addToCartButton() {
+  final cartProvider = Provider.of<CartProvider>(context, listen: false);
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: GestureDetector(
-        onTap: () {
-          // Pass the image path directly, without constructing the URL here
-          final imagePath = productDetails!['image'];  // Image path stored in productDetails
-
-          
-
-          // Create a CartItem object with the product details
-          final cartItem = CartItem(
-            id: productDetails!['id'].toString(), // Product ID
-            name: productDetails!['name'], // Product name
-            category: productDetails!['category'], // Product category
-            weight: double.parse(productDetails!['weight'].toString()), // Product weight
-            selectedSize: productDetails!['sizes'][selectedSize].toString(), // Selected size
-            selectedLength: productDetails!['lengths'][selectedLength].toString(), // Selected length
-            quantity: 1, // Default quantity
-            imageUrl: imagePath, // Passing image path directly
+  return Padding(
+    padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+    child: GestureDetector(
+      onTap: () {
+        // Ensure productDetails is not null
+        if (productDetails == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Colors.red,
+              content: Text("Product details are missing."),
+            ),
           );
+          return;
+        }
+
+        // Ensure required fields are not null
+        final id = productDetails!['id']?.toString() ?? '0';
+        final name = productDetails!['name']?.toString() ?? 'Unknown';
+        final category = productDetails!['category']?.toString() ?? 'No category';
+        final weight = double.tryParse(productDetails!['weight']?.toString() ?? '0') ?? 0.0;
+        final imageUrl = productDetails!['image']?.toString(); // Now nullable
+
+        // Handle nullable carat
+        final carat = productDetails?['carat'] != null
+            ? double.tryParse(productDetails!['carat'].toString()) ?? 0.0 // Default to 0.0 if parsing fails
+            : 0.0; // Default to 0.0 if carat is null
+
+        // Create a CartItem object with the product details
+        final cartItem = CartItem(
+          id: id,
+          name: name,
+          category: category,
+          weight: weight,
+          selectedSize: productDetails?['sizes'] != null && productDetails!['sizes'].isNotEmpty
+              ? productDetails!['sizes'][selectedSize].toString()
+              : null,
+          selectedLength: productDetails?['lengths'] != null && productDetails!['lengths'].isNotEmpty
+              ? productDetails!['lengths'][selectedLength].toString()
+              : null,
+          carat: carat, // Now a non-nullable double
+          imageUrl: imageUrl, // Now nullable
+          quantity: 1,
+        );
 
         // Add the product to the cart
         cartProvider.addToCart(cartItem);
@@ -228,8 +263,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   );
 }
 
-
-  sizeInfo() {
+  Widget sizeInfo() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -248,7 +282,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             children: (productDetails!['sizes'] as List<dynamic>).map((size) {
               return GestureDetector(
                 onTap: () {
-                  
                   setState(() {
                     selectedSize = productDetails!['sizes'].indexOf(size);
                   });
@@ -256,8 +289,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 child: Container(
                   height: 34.0,
                   width: 34.0,
-                  margin: const EdgeInsets.symmetric(
-                      horizontal: fixPadding * 0.75),
+                  margin: const EdgeInsets.symmetric(horizontal: fixPadding * 0.75),
                   decoration: BoxDecoration(
                     color: selectedSize == productDetails!['sizes'].indexOf(size)
                         ? primaryColor
@@ -282,7 +314,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  lengthsInfo() {
+  Widget lengthsInfo() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -301,7 +333,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             children: (productDetails!['lengths'] as List<dynamic>).map((length) {
               return GestureDetector(
                 onTap: () {
-                  
                   setState(() {
                     selectedLength = productDetails!['lengths'].indexOf(length);
                   });
@@ -334,7 +365,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  jewelryInfo() {
+  Widget jewelryInfo() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
       child: Row(
@@ -351,22 +382,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 Text(
                   productDetails!['category'] ?? 'No category',
                   style: medium13Grey,
-                )
+                ),
               ],
             ),
           ),
           widthSpace,
-          Text(
-  "${productDetails!['weight']} g", // Append "kg" after the weight
-  style: bold18Primary,
-)
-
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                "${productDetails!['weight']} g", // Append "g" after the weight
+                style: bold18Primary,
+              ),
+              // Add Carat below the weight
+              if (productDetails!['carat'] != null)
+                Text(
+                  "${productDetails!['carat']} ct", // Append "ct" after the carat value
+                  style: bold18Primary,
+                ),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  header(Size size, BuildContext context) {
+  Widget header(Size size, BuildContext context) {
     return SliverAppBar(
       expandedHeight: size.height * 0.25, // Reduced image size
       backgroundColor: whiteColor,
@@ -382,7 +423,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       elevation: 0.0,
       leading: IconButton(
         onPressed: () {
-          
           Navigator.pop(context);
         },
         icon: const Icon(
@@ -408,31 +448,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  productImages(Size size) {
+  Widget productImages(Size size) {
     return FlexibleSpaceBar(
       collapseMode: CollapseMode.pin,
       background: Stack(
         children: [
           Center(
             child: CarouselSlider(
-              items: [
-                CachedNetworkImage(
-                  imageUrl:
-                      'http://192.168.0.104:8000/storage/${productDetails!['image']}',
+              items: (productDetails?['images'] as List<dynamic>?)
+                  ?.map((imageUrl) {
+                // Construct the full URL for the image
+                return CachedNetworkImage(
+                  imageUrl: 'http://192.168.0.110:8000/storage/$imageUrl',
                   fit: BoxFit.cover,
                   placeholder: (context, url) => const CircularProgressIndicator(),
                   errorWidget: (context, url, error) {
-                    
                     return const Icon(Icons.error); // Display an error icon
                   },
-                ),
-              ],
+                );
+              }).toList() ??
+                  [], // Handle case when 'images' is null or empty
               options: CarouselOptions(
                 viewportFraction: 1.0,
-                height: size.height * 0.25, // Reduced image height
+                height: size.height * 0.25, // Adjusted image height
                 initialPage: currentImageIndex,
                 onPageChanged: (index, reason) {
-                  
                   setState(() {
                     currentImageIndex = index;
                   });
@@ -447,13 +487,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
-                1, // Only one image in this example
+                // Safely access the length of the images list
+                (productDetails?['images'] as List<dynamic>?)?.length ?? 0,
                 (index) {
                   return Container(
                     height: 10.0,
                     width: 10.0,
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: fixPadding / 4),
+                    margin: const EdgeInsets.symmetric(horizontal: fixPadding / 4),
                     decoration: BoxDecoration(
                       color: currentImageIndex == index ? greyC4Color : f0Color,
                       borderRadius: BorderRadius.circular(2.0),
