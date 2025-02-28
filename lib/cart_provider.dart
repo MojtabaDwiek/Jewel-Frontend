@@ -6,7 +6,7 @@ class CartProvider with ChangeNotifier {
 
   List<CartItem> get cartItems => _cartItems;
 
-  // Modify the addToCart method to include carat and handle nullable imageUrl
+  // Add a product to the cart
   void addToCart(CartItem item) {
     // Check if the item already exists in the cart
     final existingItem = _cartItems.firstWhere(
@@ -14,7 +14,8 @@ class CartProvider with ChangeNotifier {
           cartItem.id == item.id &&
           cartItem.selectedSize == item.selectedSize &&
           cartItem.selectedLength == item.selectedLength &&
-          cartItem.carat == item.carat, // Include carat in the comparison
+          cartItem.carat == item.carat &&
+          cartItem.note == item.note, // Include note in the comparison
       orElse: () => CartItem(
         id: '',
         name: '',
@@ -24,6 +25,7 @@ class CartProvider with ChangeNotifier {
         selectedLength: '',
         carat: item.carat, // Include carat here
         imageUrl: item.imageUrl, // Include imageUrl (nullable)
+        note: item.note, // Include note (nullable)
         quantity: 0,
       ),
     );
@@ -32,25 +34,47 @@ class CartProvider with ChangeNotifier {
       // If it exists, update the quantity
       existingItem.quantity += item.quantity;
     } else {
-      // Otherwise, add a new item with the provided carat and imageUrl
+      // Otherwise, add a new item with the provided carat, imageUrl, and note
       _cartItems.add(item);
     }
 
     notifyListeners();
   }
 
+  // Remove a product from the cart
   void removeFromCart(CartItem item) {
     _cartItems.remove(item);
     notifyListeners();
   }
 
+  // Update the quantity of a product in the cart
   void updateQuantity(CartItem item, int newQuantity) {
-    item.quantity = newQuantity;
+    if (newQuantity > 0) {
+      item.quantity = newQuantity;
+    } else {
+      // If the quantity is 0 or less, remove the item from the cart
+      _cartItems.remove(item);
+    }
     notifyListeners();
   }
 
+  // Clear the entire cart
   void clearCart() {
     _cartItems.clear();
     notifyListeners();
+  }
+
+  // Calculate the total number of items in the cart
+  int get totalItems {
+    return _cartItems.fold(0, (sum, item) => sum + item.quantity);
+  }
+
+  // Calculate the total price of items in the cart (assuming price is available in CartItem)
+  double get totalPrice {
+    return _cartItems.fold(0.0, (sum, item) {
+      // Assuming each CartItem has a 'price' field
+      final price = item.weight * 100; // Example: price = weight * 100 (replace with actual logic)
+      return sum + (price * item.quantity);
+    });
   }
 }

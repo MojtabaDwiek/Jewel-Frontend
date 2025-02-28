@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
 import 'package:iconify_flutter_plus/icons/bx.dart';
 import 'package:pn_fl_jewellery_empire/screens/bottom_bar.dart';
@@ -16,16 +15,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final posterList = [
-    {
-      "image": "assets/home/poster-image.png",
-      "title": "Buy Your Elegant\nJewelry",
-    },
-    {
-      "image": "assets/home/poster-image.png",
-      "title": "Buy Your Elegant\nJewelry",
-    },
-  ];
+  final poster = {
+    "image": "assets/home/poster-image.png", // Path to your poster image
+    "title": "Explore our Special Jewelry Collection", // Updated text
+  };
 
   final categoryList = [
     {"image": "assets/home/Jewelry-1.png", "title": "كسر شفت"},
@@ -37,7 +30,6 @@ class _HomeScreenState extends State<HomeScreen> {
     {"image": "assets/home/Jewelry-3.png", "title": "خواتم"},
   ];
 
-  
   List<dynamic> _popularList = [];
   bool _isLoading = false;
   String _errorMessage = '';
@@ -49,38 +41,36 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchProducts() async {
-  setState(() {
-    _isLoading = true;
-    _errorMessage = '';
-  });
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
 
-  try {
-    final products = await ApiService.fetchProducts();
+    try {
+      final products = await ApiService.fetchProducts();
 
-    // Check if the widget is still mounted before updating state
-    if (mounted) {
-      setState(() {
-        
-        _popularList = products; // Assign fetched products to popular list
-      });
-    }
-  } catch (e) {
-    // Check if the widget is still mounted before updating state
-    if (mounted) {
-      setState(() {
-        _errorMessage = 'Failed to fetch products: $e';
-      });
-    }
-  } finally {
-    // Check if the widget is still mounted before updating state
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+      // Check if the widget is still mounted before updating state
+      if (mounted) {
+        setState(() {
+          _popularList = products; // Assign fetched products to popular list
+        });
+      }
+    } catch (e) {
+      // Check if the widget is still mounted before updating state
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to fetch products: $e';
+        });
+      }
+    } finally {
+      // Check if the widget is still mounted before updating state
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
-}
-
 
   // Logout functionality
   Future<void> _logout() async {
@@ -116,14 +106,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           physics: const BouncingScrollPhysics(),
                           padding: const EdgeInsets.only(top: fixPadding * 2.0),
                           children: [
-                            posters(),
+                            posterWidget(), // Single poster widget
                             heightSpace,
                             heightSpace,
                             heightSpace,
                             categoryListContent(),
                             heightSpace,
                             heightSpace,
-                            
                             heightSpace,
                             heightSpace,
                             popularListContent(),
@@ -132,6 +121,66 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
           )
         ],
+      ),
+    );
+  }
+
+  Widget posterWidget() {
+    return GestureDetector(
+      onTap: () {
+        // Navigate to the CategoryProductsScreen with the "Special" category
+        Navigator.pushNamed(
+          context,
+          '/categoryProducts',
+          arguments: "Special", // Pass the category name
+        );
+      },
+      child: Container(
+        width: double.maxFinite,
+        height: 155.0,
+        margin: const EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
+        clipBehavior: Clip.hardEdge,
+        decoration: BoxDecoration(
+          color: whiteColor,
+          borderRadius: BorderRadius.circular(10.0),
+          image: DecorationImage(
+            image: AssetImage(poster['image'].toString()),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10.0),
+            color: whiteColor.withOpacity(0.2),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                poster['title'].toString(),
+                style: bold22White,
+                overflow: TextOverflow.ellipsis,
+              ),
+              heightSpace,
+              heightSpace,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: fixPadding * 2.0, vertical: fixPadding * 0.4),
+                decoration: BoxDecoration(
+                  color: whiteColor,
+                  borderRadius: BorderRadius.circular(5.0),
+                ),
+                child: const Text(
+                  "Order Now",
+                  style: medium15Black,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -197,104 +246,101 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  
-
   Widget popularListContent() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      title("Popular"),
-      GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(
-            fixPadding * 2.0, fixPadding, fixPadding * 2.0, fixPadding * 2.0),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: fixPadding * 2.0,
-          crossAxisSpacing: fixPadding * 2.0,
-          childAspectRatio: 0.8,
-        ),
-        itemCount: _popularList.length,
-        itemBuilder: (context, index) {
-          final product = _popularList[index];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        title("Popular"),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+              fixPadding * 2.0, fixPadding, fixPadding * 2.0, fixPadding * 2.0),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: fixPadding * 2.0,
+            crossAxisSpacing: fixPadding * 2.0,
+            childAspectRatio: 0.8,
+          ),
+          itemCount: _popularList.length,
+          itemBuilder: (context, index) {
+            final product = _popularList[index];
 
-          // Ensure that the 'images' field is not null or empty
-          List<String> imageUrls = [];
-          if (product['images'] != null && product['images'].isNotEmpty) {
-            imageUrls = List<String>.from(product['images']);
-          }
+            // Ensure that the 'images' field is not null or empty
+            List<String> imageUrls = [];
+            if (product['images'] != null && product['images'].isNotEmpty) {
+              imageUrls = List<String>.from(product['images']);
+            }
 
-          // If no images are available, show a fallback image
-          String imageUrl = imageUrls.isNotEmpty
-              ? 'http://192.168.0.110:8000/storage/${imageUrls[0]}'
-              : 'http://192.168.0.110:8000/storage/default_image.png'; // Use a fallback image
+            // If no images are available, show a fallback image
+            String imageUrl = imageUrls.isNotEmpty
+                ? 'http://192.168.0.110:8000/storage/${imageUrls[0]}'
+                : 'http://192.168.0.110:8000/storage/default_image.png'; // Use a fallback image
 
-          return GestureDetector(
-            onTap: () {
-              Navigator.pushNamed(
-                context,
-                '/productDetail',
-                arguments: product['id'], // Pass the product ID
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
-              width: double.maxFinite,
-              decoration: BoxDecoration(
-                color: whiteColor,
-                borderRadius: BorderRadius.circular(10.0),
-                border: Border.all(color: borderColor),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Center(
-                      child: CachedNetworkImage(
-                        imageUrl: imageUrl, // Display the first image in the array
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => const CircularProgressIndicator(),
-                        errorWidget: (context, url, error) {
-                          return const Icon(Icons.error); // Display an error icon
-                        },
+            return GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/productDetail',
+                  arguments: product['id'], // Pass the product ID
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
+                width: double.maxFinite,
+                decoration: BoxDecoration(
+                  color: whiteColor,
+                  borderRadius: BorderRadius.circular(10.0),
+                  border: Border.all(color: borderColor),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Center(
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl, // Display the first image in the array
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const CircularProgressIndicator(),
+                          errorWidget: (context, url, error) {
+                            return const Icon(Icons.error); // Display an error icon
+                          },
+                        ),
                       ),
                     ),
-                  ),
-                  Container(
-                    margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
-                    width: double.maxFinite,
-                    height: 1.0,
-                    color: borderColor,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: fixPadding),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          product['name'],
-                          style: regular16Black,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          '${product['weight']} g', // Display weight
-                          style: semibold16Black,
-                          overflow: TextOverflow.ellipsis,
-                        )
-                      ],
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
+                      width: double.maxFinite,
+                      height: 1.0,
+                      color: borderColor,
                     ),
-                  )
-                ],
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: fixPadding),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            product['name'],
+                            style: regular16Black,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '${product['weight']} g', // Display weight
+                            style: semibold16Black,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        ],
+                      ),
+                    )
+                  ],
+                ),
               ),
-            ),
-          );
-        },
-      )
-    ],
-  );
-}
-
+            );
+          },
+        )
+      ],
+    );
+  }
 
   Widget title(String title) {
     return Padding(
@@ -302,69 +348,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Text(
         title,
         style: semibold18Black,
-      ),
-    );
-  }
-
-  Widget posters() {
-    return CarouselSlider(
-      items: List.generate(
-        posterList.length,
-        (index) {
-          return Container(
-            width: double.maxFinite,
-            clipBehavior: Clip.hardEdge,
-            margin: const EdgeInsets.symmetric(horizontal: fixPadding * 0.5),
-            decoration: BoxDecoration(
-              color: whiteColor,
-              borderRadius: BorderRadius.circular(10.0),
-              image: DecorationImage(
-                image: AssetImage(
-                  posterList[index]['image'].toString(),
-                ),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10.0),
-                color: whiteColor.withOpacity(0.2),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    posterList[index]['title'].toString(),
-                    style: bold22White,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  heightSpace,
-                  heightSpace,
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: fixPadding * 2.0,
-                        vertical: fixPadding * 0.4),
-                    decoration: BoxDecoration(
-                      color: whiteColor,
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
-                    child: const Text(
-                      "Get Now",
-                      style: medium15Black,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  )
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-      options: CarouselOptions(
-        height: 155.0,
-        viewportFraction: 0.9,
       ),
     );
   }
