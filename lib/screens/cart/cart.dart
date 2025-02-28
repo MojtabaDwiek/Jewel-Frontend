@@ -128,152 +128,171 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   cartItemListContent(CartProvider cartProvider) {
-    return ColumnBuilder(
-      itemBuilder: (context, index) {
-        final item = cartProvider.cartItems[index];
+  return ColumnBuilder(
+    itemBuilder: (context, index) {
+      final item = cartProvider.cartItems[index];
 
-        return Container(
-          padding: const EdgeInsets.all(fixPadding),
-          margin: const EdgeInsets.symmetric(vertical: fixPadding),
-          width: double.maxFinite,
-          decoration: BoxDecoration(
-            color: whiteColor,
-            borderRadius: BorderRadius.circular(10.0),
-            border: Border.all(color: borderColor),
-          ),
-          child: Row(
-            children: [
-              // Removed the image part
-              Container(
-                padding: const EdgeInsets.all(fixPadding),
-                height: 80.0,
-                width: 85.0,
-                decoration: BoxDecoration(
-                  color: whiteColor,
-                  borderRadius: BorderRadius.circular(10.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: blackColor.withOpacity(0.1),
-                      blurRadius: 20.0,
-                      offset: const Offset(0, 10),
-                    )
-                  ],
-                ),
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.shopping_bag, // Placeholder icon when no image is shown
-                  size: 40.0,
-                  color: greyColor,
+      // Base URL for images
+      const baseUrl = 'http://192.168.0.110:8000/storage/'; // Replace with your actual server URL
+      final imageUrl = item.imageUrl != null && item.imageUrl!.isNotEmpty
+          ? '$baseUrl${item.imageUrl}' // Prepend the base URL to the image URL
+          : 'https://example.com/fallback-image.jpg'; // Fallback image URL
+
+      return Container(
+        padding: const EdgeInsets.all(fixPadding),
+        margin: const EdgeInsets.symmetric(vertical: fixPadding),
+        width: double.maxFinite,
+        decoration: BoxDecoration(
+          color: whiteColor,
+          borderRadius: BorderRadius.circular(10.0),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          children: [
+            // Image part
+            Container(
+              padding: const EdgeInsets.all(fixPadding),
+              height: 80.0,
+              width: 85.0,
+              decoration: BoxDecoration(
+                color: whiteColor,
+                borderRadius: BorderRadius.circular(10.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: blackColor.withOpacity(0.1),
+                    blurRadius: 20.0,
+                    offset: const Offset(0, 10),
+                  )
+                ],
+              ),
+              alignment: Alignment.center,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10.0),
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  width: 85.0,
+                  height: 80.0,
+                  errorBuilder: (context, error, stackTrace) {
+                    debugPrint("Error loading image: $error");
+                    return const Icon(
+                      Icons.shopping_bag, // Placeholder icon if image fails to load
+                      size: 40.0,
+                      color: greyColor,
+                    );
+                  },
                 ),
               ),
-              widthSpace,
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+            ),
+            widthSpace,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.name, // Use the name from CartItem
+                              style: regular16Black,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            heightBox(3.0),
+                            // Display size only if it's not null
+                            if (item.selectedSize != null)
                               Text(
-                                item.name, // Use the name from CartItem
-                                style: regular16Black,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              heightBox(3.0),
-                              // Display size only if it's not null
-                              if (item.selectedSize != null)
-                                Text(
-                                  "Size: ${item.selectedSize}", // Use the size from CartItem
-                                  style: regular14Grey,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              heightBox(3.0),
-                              // Display length only if it's not null
-                              if (item.selectedLength != null)
-                                Text(
-                                  "Length: ${item.selectedLength}", // Use the length from CartItem
-                                  style: regular14Grey,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              heightBox(3.0),
-                              Text(
-                                "Weight: ${item.weight.toStringAsFixed(2)} g", // Use the weight from CartItem
+                                "Size: ${item.selectedSize}", // Use the size from CartItem
                                 style: regular14Grey,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              heightBox(3.0),
-                              // Display carat only if it's not null
+                            heightBox(3.0),
+                            // Display length only if it's not null
+                            if (item.selectedLength != null)
                               Text(
-                                "Carat: ${item.carat} ct", // Use the carat from CartItem
+                                "Length: ${item.selectedLength}", // Use the length from CartItem
                                 style: regular14Grey,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                            ],
-                          ),
+                            heightBox(3.0),
+                            Text(
+                              "Weight: ${item.weight.toStringAsFixed(2)} g", // Use the weight from CartItem
+                              style: regular14Grey,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            heightBox(3.0),
+                            // Display carat only if it's not null
+                            Text(
+                              "Carat: ${item.carat} ct", // Use the carat from CartItem
+                              style: regular14Grey,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    heightSpace,
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              addRemoveButton(Icons.remove, () {
-                                if (item.quantity > 1) {
-                                  cartProvider.updateQuantity(item, item.quantity - 1);
-                                }
-                              }),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: fixPadding * 1.5),
-                                child: Text(
-                                  item.quantity.toString(), // Use the quantity from CartItem
-                                  style: bold14Black,
-                                ),
+                      ),
+                    ],
+                  ),
+                  heightSpace,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Row(
+                          children: [
+                            addRemoveButton(Icons.remove, () {
+                              if (item.quantity > 1) {
+                                cartProvider.updateQuantity(item, item.quantity - 1);
+                              }
+                            }),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: fixPadding * 1.5),
+                              child: Text(
+                                item.quantity.toString(), // Use the quantity from CartItem
+                                style: bold14Black,
                               ),
-                              addRemoveButton(Icons.add, () {
-                                cartProvider.updateQuantity(item, item.quantity + 1);
-                              }),
-                            ],
-                          ),
+                            ),
+                            addRemoveButton(Icons.add, () {
+                              cartProvider.updateQuantity(item, item.quantity + 1);
+                            }),
+                          ],
                         ),
-                        InkWell(
-                          onTap: () {
-                            cartProvider.removeFromCart(item);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                backgroundColor: blackColor,
-                                duration: Duration(milliseconds: 1500),
-                                behavior: SnackBarBehavior.floating,
-                                content: Text(
-                                  "Removed from shopping cart",
-                                  style: medium16White,
-                                ),
+                      ),
+                      InkWell(
+                        onTap: () {
+                          cartProvider.removeFromCart(item);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              backgroundColor: blackColor,
+                              duration: Duration(milliseconds: 1500),
+                              behavior: SnackBarBehavior.floating,
+                              content: Text(
+                                "Removed from shopping cart",
+                                style: medium16White,
                               ),
-                            );
-                          },
-                          child: const Iconify(
-                            Uil.trash_alt,
-                            size: 22.0,
-                          ),
-                        )
-                      ],
-                    )
-                  ],
-                ),
-              )
-            ],
-          ),
-        );
-      },
-      itemCount: cartProvider.cartItems.length,
-    );
-  }
+                            ),
+                          );
+                        },
+                        child: const Iconify(
+                          Uil.trash_alt,
+                          size: 22.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+    itemCount: cartProvider.cartItems.length,
+  );
+}
+
 
   addRemoveButton(IconData icon, Function() onTap) {
     return GestureDetector(

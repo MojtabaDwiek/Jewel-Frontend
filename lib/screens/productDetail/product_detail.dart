@@ -174,131 +174,147 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget addToCartButton() {
-    final cartProvider = Provider.of<CartProvider>(context, listen: false);
-    TextEditingController noteController = TextEditingController();
+ Widget addToCartButton() {
+  final cartProvider = Provider.of<CartProvider>(context, listen: false);
+  TextEditingController noteController = TextEditingController();
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: GestureDetector(
-        onTap: () async {
-          // Show a dialog to add a note
-          final String? note = await showDialog<String>(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text("Add a Note (Optional)"),
-                content: TextFormField(
-                  controller: noteController,
-                  decoration: const InputDecoration(
-                    hintText: "Enter your note here...",
-                  ),
-                  maxLines: 3,
+  return Padding(
+    padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+    child: GestureDetector(
+      onTap: () async {
+        // Show a dialog to add a note
+        final String? note = await showDialog<String>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Add a Note (Optional)"),
+              content: TextFormField(
+                controller: noteController,
+                decoration: const InputDecoration(
+                  hintText: "Enter your note here...",
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(noteController.text);
-                    },
-                    child: const Text("Add to Cart"),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text("Cancel"),
-                  ),
-                ],
-              );
-            },
-          );
-
-          // If the user cancels the dialog, return
-          if (note == null) return;
-
-          // Ensure productDetails is not null
-          if (productDetails == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                backgroundColor: Colors.red,
-                content: Text("Product details are missing."),
+                maxLines: 3,
               ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(noteController.text);
+                  },
+                  child: const Text("Add to Cart"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("Cancel"),
+                ),
+              ],
             );
-            return;
-          }
+          },
+        );
 
-          // Ensure required fields are not null
-          final id = productDetails!['id']?.toString() ?? '0';
-          final name = productDetails!['name']?.toString() ?? 'Unknown';
-          final category = productDetails!['category']?.toString() ?? 'No category';
-          final weight = double.tryParse(productDetails!['weight']?.toString() ?? '0') ?? 0.0;
-          final imageUrl = productDetails!['image']?.toString(); // Now nullable
+        // If the user cancels the dialog, return
+        if (note == null) return;
 
-          // Handle nullable carat
-          final carat = productDetails?['carat'] != null
-              ? double.tryParse(productDetails!['carat'].toString()) ?? 0.0 // Default to 0.0 if parsing fails
-              : 0.0; // Default to 0.0 if carat is null
-
-          // Create a CartItem object with the product details
-          final cartItem = CartItem(
-            id: id,
-            name: name,
-            category: category,
-            weight: weight,
-            selectedSize: productDetails?['sizes'] != null && productDetails!['sizes'].isNotEmpty
-                ? productDetails!['sizes'][selectedSize].toString()
-                : null,
-            selectedLength: productDetails?['lengths'] != null && productDetails!['lengths'].isNotEmpty
-                ? productDetails!['lengths'][selectedLength].toString()
-                : null,
-            carat: carat, // Now a non-nullable double
-            imageUrl: imageUrl, // Now nullable
-            quantity: 1,
-            note: note, // Add the note to the cart item (nullable)
-          );
-
-          // Add the product to the cart
-          cartProvider.addToCart(cartItem);
-
-          // Show a success message
+        // Ensure productDetails is not null
+        if (productDetails == null) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              backgroundColor: blackColor,
-              behavior: SnackBarBehavior.floating,
-              duration: Duration(milliseconds: 1500),
-              content: Text(
-                "Added to cart",
-                style: medium16White,
-              ),
+              backgroundColor: Colors.red,
+              content: Text("Product details are missing."),
             ),
           );
+          return;
+        }
 
-          // Navigate to the cart screen (optional)
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const BottomBar(index: 2),
+        // Debug: Print the entire productDetails map
+        print("Product Details Map: $productDetails");
+
+        // Validate required fields
+        final id = productDetails!['id']?.toString();
+        final name = productDetails!['name']?.toString();
+        final category = productDetails!['category']?.toString();
+        final weight = double.tryParse(productDetails!['weight']?.toString() ?? '0') ?? 0.0;
+        final imageUrl = productDetails!['images'] != null && productDetails!['images'].isNotEmpty
+            ? productDetails!['images'][0].toString() // Use the first image in the list
+            : 'https://example.com/fallback-image.jpg'; // Fallback URL if the list is empty
+        final carat = productDetails?['carat'] != null
+            ? double.tryParse(productDetails!['carat'].toString()) ?? 0.0
+            : 0.0;
+
+        // Check if required fields are missing
+        if (id == null || name == null || category == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Colors.red,
+              content: Text("Required product details are missing."),
             ),
           );
-        },
-        child: Container(
-          width: double.maxFinite,
-          padding: const EdgeInsets.symmetric(
-              vertical: fixPadding * 1.5, horizontal: fixPadding * 2.0),
-          margin: const EdgeInsets.all(fixPadding * 2.0),
-          decoration: BoxDecoration(
-            color: blackColor,
-            borderRadius: BorderRadius.circular(10.0),
+          return;
+        }
+
+        // Create a CartItem object with the product details
+        final cartItem = CartItem(
+          id: id,
+          name: name,
+          category: category,
+          weight: weight,
+          selectedSize: productDetails?['sizes'] != null && productDetails!['sizes'].isNotEmpty
+              ? productDetails!['sizes'][selectedSize].toString()
+              : null,
+          selectedLength: productDetails?['lengths'] != null && productDetails!['lengths'].isNotEmpty
+              ? productDetails!['lengths'][selectedLength].toString()
+              : null,
+          carat: carat,
+          imageUrl: imageUrl,
+          quantity: 1,
+          note: note,
+        );
+
+        // Add the product to the cart
+        cartProvider.addToCart(cartItem);
+
+        // Show a success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: blackColor,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(milliseconds: 1500),
+            content: Text(
+              "Added to cart",
+              style: medium16White,
+            ),
           ),
-          child: const Text(
-            "Add to Cart",
-            style: medium19White,
-            textAlign: TextAlign.center,
+        );
+
+        // Navigate to the cart screen (optional)
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const BottomBar(index: 2),
           ),
+        );
+      },
+      child: Container(
+        width: double.maxFinite,
+        padding: const EdgeInsets.symmetric(
+          vertical: fixPadding * 1.5,
+          horizontal: fixPadding * 2.0,
+        ),
+        margin: const EdgeInsets.all(fixPadding * 2.0),
+        decoration: BoxDecoration(
+          color: blackColor,
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        child: const Text(
+          "Add to Cart",
+          style: medium19White,
+          textAlign: TextAlign.center,
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget sizeInfo() {
     return Column(
