@@ -13,34 +13,48 @@ class ApiService {
 
   // Login
   static Future<Map<String, dynamic>> login(String username, String password) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'username': username, 'password': password}),
-      );
+  try {
+    final response = await http.post(
+      Uri.parse('$baseUrl/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'username': username, 'password': password}),
+    );
 
-      final data = jsonDecode(response.body);
+    final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200) {
-        // Save token and user data to SharedPreferences
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setString('token', data['token']);
-        prefs.setString('user', jsonEncode(data['user']));
+    if (response.statusCode == 200) {
+      // Save token, user data, and IDs to SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setString('token', data['token']);
+      prefs.setString('user', jsonEncode(data['user']));
 
-
-        // Return the token and user data as a map
-        return {
-          'token': data['token'],
-          'user': data['user'],
-        };
+      // Check if the user is a customer or retailer
+      if (data['customer_id'] != null) {
+        // User is a customer
+        prefs.setString('customer_id', data['customer_id'].toString());
+        prefs.remove('retailer_id'); // Clear retailer_id if it exists
+      } else if (data['retailer_id'] != null) {
+        // User is a retailer
+        prefs.setString('retailer_id', data['retailer_id'].toString());
+        prefs.remove('customer_id'); // Clear customer_id if it exists
       } else {
-        throw Exception(data['message']);
+        throw Exception('Neither customer_id nor retailer_id found in the response');
       }
-    } catch (error) {
-      rethrow; // Re-throw the error so that it can be handled in the UI
+
+      // Return the token, user data, and IDs as a map
+      return {
+        'token': data['token'],
+        'user': data['user'],
+        'customer_id': data['customer_id'],
+        'retailer_id': data['retailer_id'],
+      };
+    } else {
+      throw Exception(data['message']);
     }
+  } catch (error) {
+    rethrow; // Re-throw the error so that it can be handled in the UI
   }
+}
 
   // Logout
   static Future<void> logout() async {
@@ -71,6 +85,28 @@ class ApiService {
       rethrow;
     }
   }
+
+
+static Future<String?> fetchRetailerPhone(String customerId) async {
+    final url = Uri.parse('$baseUrl/customers/$customerId/retailer-phone');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        // Parse the response body
+        final data = json.decode(response.body);
+        return data['phoneNumber']; // Adjust based on your API response structure
+      } else {
+        // Handle non-200 status codes
+        throw Exception('Failed to load retailer phone number: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle any errors
+      throw Exception('An error occurred: $e');
+    }
+  }
+
 
   // Check if the user is logged in
   static Future<bool> isLoggedIn() async {
