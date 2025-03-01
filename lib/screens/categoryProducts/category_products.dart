@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
-import 'package:cached_network_image/cached_network_image.dart'; // For network images
-import 'package:pn_fl_jewellery_empire/services/api_service.dart'; // Import your API service
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:pn_fl_jewellery_empire/services/api_service.dart';
 
 class CategoryProductsScreen extends StatefulWidget {
   const CategoryProductsScreen({super.key});
@@ -15,6 +15,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   bool _isLoading = false;
   String _errorMessage = '';
   String? categoryName; // To store the selected category name
+  bool _isDisposed = false;
 
   @override
   void didChangeDependencies() {
@@ -27,8 +28,15 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
   Future<void> _fetchCategoryProducts() async {
-    // Start by setting the loading state
+    if (!mounted) return; // Ensure the widget is still mounted before proceeding
+
     setState(() {
       _isLoading = true;
       _errorMessage = '';
@@ -44,21 +52,21 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       }).toList();
 
       // Only call setState if the widget is still mounted
-      if (mounted) {
+      if (!_isDisposed && mounted) {
         setState(() {
           _categoryProducts = filteredProducts;
         });
       }
     } catch (e) {
       // Update error message if there's an issue with fetching products
-      if (mounted) {
+      if (!_isDisposed && mounted) {
         setState(() {
           _errorMessage = 'Failed to fetch products: $e';
         });
       }
     } finally {
       // Set loading state to false after fetching is complete
-      if (mounted) {
+      if (!_isDisposed && mounted) {
         setState(() {
           _isLoading = false;
         });
@@ -144,6 +152,8 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                         errorWidget: (context, url, error) {
                           return const Icon(Icons.error); // Display an error icon
                         },
+                        memCacheHeight: 200, // Optimize image caching
+                        memCacheWidth: 200, // Optimize image caching
                       ),
                     ),
                   ),

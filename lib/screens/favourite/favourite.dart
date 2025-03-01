@@ -16,11 +16,18 @@ class FavouriteScreen extends StatefulWidget {
 class _FavouriteScreenState extends State<FavouriteScreen> {
   List<dynamic> favouriteList = [];
   bool _isLoading = true; // New state variable to track loading
+  bool _isDisposed = false; // Track if the widget is disposed
 
   @override
   void initState() {
     super.initState();
     _loadFavorites();
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true; // Mark the widget as disposed
+    super.dispose();
   }
 
   // Fetch the list of favorite items from the API
@@ -32,17 +39,20 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
       }
 
       final favorites = await ApiService.viewFavorites(); // Use ApiService to fetch favorites
-      // Debugging to check if the API response is correct
 
-      setState(() {
-        // Extracting product data from the response and updating the favouriteList
-        favouriteList = favorites.map((favorite) => favorite['product']).toList();
-        _isLoading = false; // Set loading to false when data is fetched
-      });
+      if (!_isDisposed && mounted) {
+        setState(() {
+          // Extracting product data from the response and updating the favouriteList
+          favouriteList = favorites.map((favorite) => favorite['product']).toList();
+          _isLoading = false; // Set loading to false when data is fetched
+        });
+      }
     } catch (e) {
-      setState(() {
-        _isLoading = false; // Stop loading if there's an error
-      });
+      if (!_isDisposed && mounted) {
+        setState(() {
+          _isLoading = false; // Stop loading if there's an error
+        });
+      }
     }
   }
 
@@ -55,23 +65,29 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
       }
 
       await ApiService.removeFromFavorites(productId); // Use ApiService to remove from favorites
-      setState(() {
-        favouriteList.removeWhere((item) => item['id'] == productId); // Remove the product from the list
-      });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(milliseconds: 1500),
-          backgroundColor: blackColor,
-          content: Text(
-            "Removed from favourite",
-            style: medium16White,
+      if (!_isDisposed && mounted) {
+        setState(() {
+          favouriteList.removeWhere((item) => item['id'] == productId); // Remove the product from the list
+        });
+      }
+
+      if (!_isDisposed && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(milliseconds: 1500),
+            backgroundColor: blackColor,
+            content: Text(
+              "Removed from favourite",
+              style: medium16White,
+            ),
           ),
-        ),
-      );
-      // ignore: empty_catches
-    } catch (e) {}
+        );
+      }
+    } catch (e) {
+      // Handle error
+    }
   }
 
   // Function to get the token from SharedPreferences
@@ -103,14 +119,13 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
   }
 
   // Loading Indicator
- Widget _loadingIndicator() {
-  return const Center(
-    child: CircularProgressIndicator(
-      valueColor: AlwaysStoppedAnimation<Color>(primaryColor), // Adjust this to your theme color
-    ),
-  );
-}
-
+  Widget _loadingIndicator() {
+    return const Center(
+      child: CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(primaryColor), // Adjust this to your theme color
+      ),
+    );
+  }
 
   Widget _emptyListContent() {
     return Center(
@@ -186,6 +201,8 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
                       errorWidget: (context, url, error) {
                         return const Icon(Icons.error); // Display an error icon
                       },
+                      memCacheHeight: 200, // Optimize image caching
+                      memCacheWidth: 200, // Optimize image caching
                     ),
                   ),
                 ),

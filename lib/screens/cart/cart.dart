@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
 import 'package:iconify_flutter_plus/icons/ph.dart';
@@ -19,6 +20,9 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
+  bool _isLoadingCheckout = false; // Track loading state for checkout
+  bool _isDisposed = false; // Track if the widget is disposed
+
   // Method to retrieve the token
   static Future<String?> _getToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -82,6 +86,12 @@ class _CartScreenState extends State<CartScreen> {
   Widget proceedToCheckout() {
     return GestureDetector(
       onTap: () async {
+        if (_isLoadingCheckout) return; // Prevent multiple taps
+
+        setState(() {
+          _isLoadingCheckout = true; // Show loading indicator
+        });
+
         try {
           // Fetch the user ID (customer_id or retailer_id)
           final userId = await fetchUserId();
@@ -128,6 +138,12 @@ class _CartScreenState extends State<CartScreen> {
               content: Text('Error: $e'),
             ),
           );
+        } finally {
+          if (!_isDisposed && mounted) {
+            setState(() {
+              _isLoadingCheckout = false; // Hide loading indicator
+            });
+          }
         }
       },
       child: Container(
@@ -139,12 +155,26 @@ class _CartScreenState extends State<CartScreen> {
           borderRadius: BorderRadius.circular(10.0),
         ),
         alignment: Alignment.center,
-        child: const Text(
-          "Proceed to Checkout",
-          style: medium19White,
-        ),
+        child: _isLoadingCheckout
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : const Text(
+                "Proceed to Checkout",
+                style: medium19White,
+              ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 
   @override
@@ -278,18 +308,21 @@ class _CartScreenState extends State<CartScreen> {
                 alignment: Alignment.center,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10.0),
-                  child: Image.network(
-                    imageUrl,
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
                     fit: BoxFit.cover,
                     width: 85.0,
                     height: 80.0,
-                    errorBuilder: (context, error, stackTrace) {
+                    placeholder: (context, url) => const CircularProgressIndicator(),
+                    errorWidget: (context, url, error) {
                       return const Icon(
                         Icons.shopping_bag, // Placeholder icon if image fails to load
                         size: 40.0,
                         color: greyColor,
                       );
                     },
+                    memCacheHeight: 200, // Optimize image caching
+                    memCacheWidth: 200, // Optimize image caching
                   ),
                 ),
               ),

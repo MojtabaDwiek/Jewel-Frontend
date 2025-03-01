@@ -3,8 +3,8 @@ import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
 import 'package:iconify_flutter_plus/icons/bx.dart';
 import 'package:iconify_flutter_plus/icons/ph.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
-import 'package:pn_fl_jewellery_empire/services/api_service.dart'; // Import your API service
-import 'package:cached_network_image/cached_network_image.dart'; // For network images
+import 'package:pn_fl_jewellery_empire/services/api_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -19,11 +19,18 @@ class _SearchScreenState extends State<SearchScreen> {
   List<dynamic> _searchResults = []; // To store search results
   bool _isLoading = false;
   String _errorMessage = '';
+  bool _isDisposed = false;
 
   @override
   void initState() {
     super.initState();
     _fetchProducts(); // Fetch all products when the screen is initialized
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 
   Future<void> _fetchProducts() async {
@@ -36,19 +43,19 @@ class _SearchScreenState extends State<SearchScreen> {
 
     try {
       final products = await ApiService.fetchProducts(); // Fetch all products
-      if (mounted) {
+      if (!_isDisposed && mounted) {
         setState(() {
           _allProducts = products;
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (!_isDisposed && mounted) {
         setState(() {
           _errorMessage = 'Failed to fetch products: $e';
         });
       }
     } finally {
-      if (mounted) {
+      if (!_isDisposed && mounted) {
         setState(() {
           _isLoading = false;
         });
@@ -57,6 +64,8 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _performSearch(String query) {
+    if (!mounted) return; // Ensure the widget is still mounted before proceeding
+
     setState(() {
       _searchResults = _allProducts
           .where((product) =>
@@ -154,6 +163,8 @@ class _SearchScreenState extends State<SearchScreen> {
                       errorWidget: (context, url, error) {
                         return const Icon(Icons.error); // Display an error icon
                       },
+                      memCacheHeight: 200, // Optimize image caching
+                      memCacheWidth: 200, // Optimize image caching
                     ),
                   ),
                 ),
@@ -211,7 +222,7 @@ class _SearchScreenState extends State<SearchScreen> {
             crossAxisSpacing: fixPadding * 2.0,
             childAspectRatio: 0.8,
           ),
-          itemCount: _allProducts.length,
+          itemCount: _allProducts.length > 6 ? 6 : _allProducts.length, // Limit to 6 products
           itemBuilder: (context, index) {
             final product = _allProducts[index];
 
@@ -254,6 +265,8 @@ class _SearchScreenState extends State<SearchScreen> {
                           errorWidget: (context, url, error) {
                             return const Icon(Icons.error); // Display an error icon
                           },
+                          memCacheHeight: 200, // Optimize image caching
+                          memCacheWidth: 200, // Optimize image caching
                         ),
                       ),
                     ),

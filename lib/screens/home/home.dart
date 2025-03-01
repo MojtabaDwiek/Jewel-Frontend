@@ -3,9 +3,9 @@ import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
 import 'package:iconify_flutter_plus/icons/bx.dart';
 import 'package:pn_fl_jewellery_empire/screens/bottom_bar.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
-import 'package:cached_network_image/cached_network_image.dart'; // For network images
-import 'package:pn_fl_jewellery_empire/services/api_service.dart'; // Import your API service
-import 'package:shared_preferences/shared_preferences.dart'; // For logout functionality
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:pn_fl_jewellery_empire/services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,8 +16,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final poster = {
-    "image": "assets/home/poster-image.png", // Path to your poster image
-    "title": "Explore our Special Jewelry Collection", // Updated text
+    "image": "assets/home/poster-image.png",
+    "title": "Explore our Special Jewelry Collection",
   };
 
   final categoryList = [
@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchProducts(); // Fetch products when the screen is initialized
+    _fetchProducts();
   }
 
   Future<void> _fetchProducts() async {
@@ -48,22 +48,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final products = await ApiService.fetchProducts();
-
-      // Check if the widget is still mounted before updating state
       if (mounted) {
         setState(() {
-          _popularList = products; // Assign fetched products to popular list
+          _popularList = products;
         });
       }
     } catch (e) {
-      // Check if the widget is still mounted before updating state
       if (mounted) {
         setState(() {
           _errorMessage = 'Failed to fetch products: $e';
         });
       }
     } finally {
-      // Check if the widget is still mounted before updating state
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -72,13 +68,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Logout functionality
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('isLoggedIn'); // Clear login state
-    await prefs.remove('token'); // Clear token
-
-    // Navigate back to the login screen
+    await prefs.remove('isLoggedIn');
+    await prefs.remove('token');
     Navigator.pushReplacementNamed(context, '/login');
   }
 
@@ -100,21 +93,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       )
                     : RefreshIndicator(
-                        onRefresh: _fetchProducts, // Trigger refresh on pull
+                        onRefresh: _fetchProducts,
                         child: ListView(
                           shrinkWrap: true,
                           physics: const BouncingScrollPhysics(),
                           padding: const EdgeInsets.only(top: fixPadding * 2.0),
                           children: [
-                            posterWidget(), // Single poster widget
-                            heightSpace,
-                            heightSpace,
-                            heightSpace,
+                            posterWidget(),
+                            const SizedBox(height: 20),
                             categoryListContent(),
-                            heightSpace,
-                            heightSpace,
-                            heightSpace,
-                            heightSpace,
+                            const SizedBox(height: 20),
                             popularListContent(),
                           ],
                         ),
@@ -128,11 +116,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget posterWidget() {
     return GestureDetector(
       onTap: () {
-        // Navigate to the CategoryProductsScreen with the "Special" category
         Navigator.pushNamed(
           context,
           '/categoryProducts',
-          arguments: "Special", // Pass the category name
+          arguments: "Special",
         );
       },
       child: Container(
@@ -163,8 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: bold22White,
                 overflow: TextOverflow.ellipsis,
               ),
-              heightSpace,
-              heightSpace,
+              const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.symmetric(
                     horizontal: fixPadding * 2.0, vertical: fixPadding * 0.4),
@@ -200,11 +186,10 @@ class _HomeScreenState extends State<HomeScreen> {
               (index) {
                 return GestureDetector(
                   onTap: () {
-                    // Navigate to CategoryProductsScreen with the selected category
                     Navigator.pushNamed(
                       context,
                       '/categoryProducts',
-                      arguments: categoryList[index]['title'], // Pass the category name
+                      arguments: categoryList[index]['title'],
                     );
                   },
                   child: Container(
@@ -224,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           fit: BoxFit.cover,
                           height: 83.0,
                         ),
-                        heightSpace,
+                        const SizedBox(height: 10),
                         Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: fixPadding),
@@ -265,24 +250,20 @@ class _HomeScreenState extends State<HomeScreen> {
           itemCount: _popularList.length,
           itemBuilder: (context, index) {
             final product = _popularList[index];
-
-            // Ensure that the 'images' field is not null or empty
             List<String> imageUrls = [];
             if (product['images'] != null && product['images'].isNotEmpty) {
               imageUrls = List<String>.from(product['images']);
             }
-
-            // If no images are available, show a fallback image
             String imageUrl = imageUrls.isNotEmpty
                 ? 'http://192.168.0.110:8000/storage/${imageUrls[0]}'
-                : 'http://192.168.0.110:8000/storage/default_image.png'; // Use a fallback image
+                : 'http://192.168.0.110:8000/storage/default_image.png';
 
             return GestureDetector(
               onTap: () {
                 Navigator.pushNamed(
                   context,
                   '/productDetail',
-                  arguments: product['id'], // Pass the product ID
+                  arguments: product['id'],
                 );
               },
               child: Container(
@@ -299,12 +280,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       child: Center(
                         child: CachedNetworkImage(
-                          imageUrl: imageUrl, // Display the first image in the array
+                          imageUrl: imageUrl,
                           fit: BoxFit.cover,
                           placeholder: (context, url) => const CircularProgressIndicator(),
                           errorWidget: (context, url, error) {
-                            return const Icon(Icons.error); // Display an error icon
+                            return const Icon(Icons.error);
                           },
+                          memCacheHeight: 200,
+                          memCacheWidth: 200,
                         ),
                       ),
                     ),
@@ -325,7 +308,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            '${product['weight']} g', // Display weight
+                            '${product['weight']} g',
                             style: semibold16Black,
                             overflow: TextOverflow.ellipsis,
                           )
@@ -357,7 +340,7 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.only(top: fixPadding),
       decoration: headerBoxDecoration,
       child: AppBar(
-        automaticallyImplyLeading: false, // Remove the default back button
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         elevation: 0.0,
         titleSpacing: 0.0,
@@ -368,7 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         leading: IconButton(
           padding: const EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
-          onPressed: _logout, // Trigger logout
+          onPressed: _logout,
           icon: const Icon(
             Icons.logout,
             size: 22.0,
