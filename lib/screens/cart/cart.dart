@@ -37,70 +37,39 @@ class _CartScreenState extends State<CartScreen> {
 
   // Method to fetch retailer's phone number
   Future<String?> fetchRetailerPhone(String userId) async {
-  const baseUrl = 'http://192.168.0.110:8000/api'; // Replace with your backend URL
-  final url = Uri.parse('$baseUrl/customers/$userId/retailer-phone');
+    const baseUrl = 'http://192.168.0.110:8000/api'; // Replace with your backend URL
+    final url = Uri.parse('$baseUrl/customers/$userId/retailer-phone');
 
-  // Debug: Log the constructed URL
-  print('Debug: Constructed URL - $url');
+    try {
+      final response = await http.get(url);
 
-  try {
-    // Debug: Log the start of the HTTP request
-    print('Debug: Making HTTP GET request to $url');
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
 
-    final response = await http.get(url);
-
-    // Debug: Log the response status code and body
-    print('Debug: Response Status Code - ${response.statusCode}');
-    print('Debug: Response Body - ${response.body}');
-
-    if (response.statusCode == 200) {
-      // Debug: Log the start of JSON decoding
-      print('Debug: Decoding JSON response');
-
-      final data = json.decode(response.body);
-
-      // Debug: Log the decoded JSON data
-      print('Debug: Decoded JSON Data - $data');
-
-      // Check if the API call was successful
-      if (data['success'] == true) {
-        // Debug: Log successful retrieval of phone number
-        print('Debug: Successfully retrieved retailer phone number');
-
-        return data['data']['retailer_phone_number']; // Extract the phone number
+        // Check if the API call was successful
+        if (data['success'] == true) {
+          return data['data']['retailer_phone_number']; // Extract the phone number
+        } else {
+          throw Exception(data['message']); // Throw the error message from the API
+        }
+      } else if (response.statusCode == 404) {
+        throw Exception('Retailer not found for this customer.');
       } else {
-        // Debug: Log API error message
-        print('Debug: API returned an error - ${data['message']}');
-
-        throw Exception(data['message']); // Throw the error message from the API
+        throw Exception('Failed to load retailer phone number: ${response.statusCode}');
       }
-    } else if (response.statusCode == 404) {
-      // Debug: Log HTTP error status code
-      print('Debug: HTTP request failed with status code ${response.statusCode}');
-
-      throw Exception('Retailer not found for this customer.');
-    } else {
-      // Debug: Log unexpected HTTP error
-      print('Debug: Unexpected HTTP error - ${response.statusCode}');
-
-      throw Exception('Failed to load retailer phone number: ${response.statusCode}');
+    } catch (e) {
+      throw Exception('An error occurred: $e');
     }
-  } catch (e) {
-    // Debug: Log any exceptions that occur
-    print('Debug: Exception occurred - $e');
-
-    throw Exception('An error occurred: $e');
   }
-}
 
   // Method to open WhatsApp with Lebanon region formatting
-  Future<void> openWhatsApp(String phoneNumber) async {
+  Future<void> openWhatsApp(String phoneNumber, {String? message}) async {
     // Format the phone number for Lebanon (add +961 prefix)
     final formattedPhoneNumber = phoneNumber.startsWith('+961')
         ? phoneNumber
         : '+961${phoneNumber.replaceAll(RegExp(r'[^0-9]'), '')}';
 
-    final whatsappUrl = "https://wa.me/$formattedPhoneNumber";
+    final whatsappUrl = "https://wa.me/$formattedPhoneNumber?text=${Uri.encodeComponent(message ?? 'Hello!')}";
 
     if (await canLaunch(whatsappUrl)) {
       await launch(whatsappUrl);
@@ -126,6 +95,10 @@ class _CartScreenState extends State<CartScreen> {
             return;
           }
 
+          // Generate the premade checkout message
+          final cartProvider = Provider.of<CartProvider>(context, listen: false);
+          final checkoutMessage = cartProvider.generateCheckoutMessage();
+
           // Check if the user is a retailer
           final prefs = await SharedPreferences.getInstance();
           final retailerId = prefs.getString('retailer_id');
@@ -133,14 +106,14 @@ class _CartScreenState extends State<CartScreen> {
           if (retailerId != null) {
             // User is a retailer: Open a specified WhatsApp chat
             const supportPhoneNumber = '+96170764354'; // Replace with the support number
-            await openWhatsApp(supportPhoneNumber);
+            await openWhatsApp(supportPhoneNumber, message: checkoutMessage);
           } else {
             // User is a customer: Fetch the retailer's phone number
             final phoneNumber = await fetchRetailerPhone(userId);
 
             if (phoneNumber != null) {
-              // Open WhatsApp with the retailer's phone number
-              await openWhatsApp(phoneNumber);
+              // Open WhatsApp with the retailer's phone number and the checkout message
+              await openWhatsApp(phoneNumber, message: checkoutMessage);
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -311,7 +284,6 @@ class _CartScreenState extends State<CartScreen> {
                     width: 85.0,
                     height: 80.0,
                     errorBuilder: (context, error, stackTrace) {
-                      debugPrint("Error loading image: $error");
                       return const Icon(
                         Icons.shopping_bag, // Placeholder icon if image fails to load
                         size: 40.0,

@@ -69,12 +69,35 @@ class CartProvider with ChangeNotifier {
     return _cartItems.fold(0, (sum, item) => sum + item.quantity);
   }
 
-  // Calculate the total price of items in the cart (assuming price is available in CartItem)
-  double get totalPrice {
-    return _cartItems.fold(0.0, (sum, item) {
-      // Assuming each CartItem has a 'price' field
-      final price = item.weight * 100; // Example: price = weight * 100 (replace with actual logic)
-      return sum + (price * item.quantity);
-    });
+  // Generate a checkout message including item details and images
+  String generateCheckoutMessage() {
+  StringBuffer message = StringBuffer();
+  message.writeln("Your order details:");
+  message.writeln("====================");
+
+  // Calculate total weight
+  double totalWeight = _cartItems.fold(
+    0,
+    (sum, item) => sum + (item.weight * item.quantity),
+  );
+
+  for (var item in _cartItems) {
+    message.writeln("Product: ${item.name}");
+    message.writeln("Category: ${item.category}");
+    message.writeln("Weight: ${item.weight}g");
+    message.writeln("Size: ${item.selectedSize}");
+    message.writeln("Length: ${item.selectedLength}");
+    message.writeln("Carat: ${item.carat}");
+    message.writeln("Note: ${item.note ?? 'No note'}");
+    message.writeln("Quantity: ${item.quantity}");
+    message.writeln("---------------------");
   }
+
+  message.writeln("Total Items: $totalItems");
+  message.writeln("Total Weight: ${totalWeight.toStringAsFixed(2)}g"); // Add total weight
+  message.writeln("====================");
+  message.writeln("Thank you for shopping with us!");
+
+  return message.toString();
+}
 }
