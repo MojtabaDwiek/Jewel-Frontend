@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
 import 'package:iconify_flutter_plus/icons/bx.dart';
 import 'package:iconify_flutter_plus/icons/ph.dart';
+import 'package:pn_fl_jewellery_empire/app_config.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
 import 'package:pn_fl_jewellery_empire/services/api_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -120,85 +122,100 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildSearchResults() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(fixPadding * 2.0),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: fixPadding * 2.0,
-        crossAxisSpacing: fixPadding * 2.0,
-        childAspectRatio: 0.8,
-      ),
-      itemCount: _searchResults.length,
-      itemBuilder: (context, index) {
-        final product = _searchResults[index];
-        final imageUrl = 'http://192.168.0.110:8000/storage/${product['image']}'; // Construct full URL
-        return GestureDetector(
-          onTap: () {
-            Navigator.pushNamed(
-              context,
-              '/productDetail',
-              arguments: product['id'], // Pass the product ID
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
-            width: double.maxFinite,
-            decoration: BoxDecoration(
-              color: whiteColor,
-              borderRadius: BorderRadius.circular(10.0),
-              border: Border.all(color: borderColor),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Center(
-                    child: CachedNetworkImage(
-                      imageUrl: imageUrl, // Use the constructed URL
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => const CircularProgressIndicator(),
-                      errorWidget: (context, url, error) {
-                        return const Icon(Icons.error); // Display an error icon
-                      },
-                      memCacheHeight: 200, // Optimize image caching
-                      memCacheWidth: 200, // Optimize image caching
-                    ),
-                  ),
-                ),
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
-                  width: double.maxFinite,
-                  height: 1.0,
-                  color: borderColor,
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: fixPadding),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product['name'],
-                        style: regular16Black,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        '${product['weight']} g', // Display weight
-                        style: semibold16Black,
-                        overflow: TextOverflow.ellipsis,
-                      )
-                    ],
-                  ),
-                )
-              ],
-            ),
+ Widget _buildSearchResults() {
+  return GridView.builder(
+    shrinkWrap: true,
+    physics: const BouncingScrollPhysics(),
+    padding: const EdgeInsets.all(fixPadding * 2.0),
+    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 2,
+      mainAxisSpacing: fixPadding * 2.0,
+      crossAxisSpacing: fixPadding * 2.0,
+      childAspectRatio: 0.8,
+    ),
+    itemCount: _searchResults.length,
+    itemBuilder: (context, index) {
+      final product = _searchResults[index];
+
+      // Ensure that the 'images' field is not null or empty
+      List<String> imageUrls = [];
+      if (product['images'] != null && product['images'].isNotEmpty) {
+        imageUrls = List<String>.from(product['images']);
+      }
+
+      // Construct the image URL
+      String imageUrl = imageUrls.isNotEmpty
+          ? '${AppConfig.imageBaseUrl}/${imageUrls[0]}' // Use the first image
+          : AppConfig.fallbackImageUrl; // Use fallback image URL from AppConfig
+
+      // Debug the image URL
+      print('Image URL: $imageUrl');
+
+      return GestureDetector(
+        onTap: () {
+          Navigator.pushNamed(
+            context,
+            '/productDetail',
+            arguments: product['id'], // Pass the product ID
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
+          width: double.maxFinite,
+          decoration: BoxDecoration(
+            color: whiteColor,
+            borderRadius: BorderRadius.circular(10.0),
+            border: Border.all(color: borderColor),
           ),
-        );
-      },
-    );
-  }
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Center(
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl, // Use the constructed URL
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => const CircularProgressIndicator(),
+                    errorWidget: (context, url, error) {
+                      print('Error loading image: $error');
+                      return const Icon(Icons.error); // Display an error icon
+                    },
+                    memCacheHeight: 200, // Optimize image caching
+                    memCacheWidth: 200, // Optimize image caching
+                  ),
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
+                width: double.maxFinite,
+                height: 1.0,
+                color: borderColor,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: fixPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product['name'],
+                      style: regular16Black,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      '${product['weight']} g', // Display weight
+                      style: semibold16Black,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  ],
+                ),
+              )
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
 
   Widget popularListContent() {
     return Column(
@@ -234,8 +251,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
             // If no images are available, show a fallback image
             String imageUrl = imageUrls.isNotEmpty
-                ? 'http://192.168.0.110:8000/storage/${imageUrls[0]}'
-                : 'http://192.168.0.110:8000/storage/default_image.png'; // Use a fallback image
+                ? '${AppConfig.imageBaseUrl}/${imageUrls[0]}' // Use imageBaseUrl from AppConfig
+                : AppConfig.fallbackImageUrl; // Use fallback image URL from AppConfig
 
             return GestureDetector(
               onTap: () {

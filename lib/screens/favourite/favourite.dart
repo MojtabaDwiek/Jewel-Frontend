@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
 import 'package:iconify_flutter_plus/icons/ph.dart';
+import 'package:pn_fl_jewellery_empire/app_config.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pn_fl_jewellery_empire/services/api_service.dart'; // Import your API service
 import 'package:shared_preferences/shared_preferences.dart'; // For SharedPreferences
+
 
 class FavouriteScreen extends StatefulWidget {
   const FavouriteScreen({super.key});
@@ -172,8 +174,8 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
 
         // If no images are available, show a fallback image
         String imageUrl = imageUrls.isNotEmpty
-            ? 'http://192.168.0.110:8000/storage/${imageUrls[0]}' // Use the first image
-            : 'http://192.168.0.110:8000/storage/default_image.png'; // Fallback image
+            ? '${AppConfig.imageBaseUrl}/${imageUrls[0]}' // Use the first image
+            : AppConfig.fallbackImageUrl; // Fallback image
 
         return GestureDetector(
           onTap: () {

@@ -4,12 +4,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
 import 'package:iconify_flutter_plus/icons/ph.dart';
 import 'package:pn_fl_jewellery_empire/Models/CartItem.dart';
+import 'package:pn_fl_jewellery_empire/app_config.dart';
 import 'package:pn_fl_jewellery_empire/screens/bottom_bar.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
 import 'package:pn_fl_jewellery_empire/services/api_service.dart';
 import 'package:provider/provider.dart';
 import 'package:pn_fl_jewellery_empire/cart_provider.dart';
 import 'package:photo_view/photo_view.dart';
+
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({super.key});
@@ -227,7 +229,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           final weight = double.tryParse(productDetails!['weight']?.toString() ?? '0') ?? 0.0;
           final imageUrl = productDetails!['images'] != null && productDetails!['images'].isNotEmpty
               ? productDetails!['images'][0].toString()
-              : 'https://example.com/fallback-image.jpg';
+              : AppConfig.fallbackImageUrl; // Use fallback image URL from AppConfig
           final carat = productDetails?['carat'] != null
               ? double.tryParse(productDetails!['carat'].toString()) ?? 0.0
               : 0.0;
@@ -507,7 +509,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             height: double.infinity,
                             child: PhotoView(
                               imageProvider: CachedNetworkImageProvider(
-                                'http://192.168.0.110:8000/storage/$imageUrl',
+                                '${AppConfig.imageBaseUrl}/$imageUrl', // Use imageBaseUrl from AppConfig
                               ),
                               minScale: PhotoViewComputedScale.contained,
                               maxScale: PhotoViewComputedScale.covered * 2,
@@ -527,7 +529,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     );
                   },
                   child: CachedNetworkImage(
-                    imageUrl: 'http://192.168.0.110:8000/storage/$imageUrl',
+                    imageUrl: '${AppConfig.imageBaseUrl}/$imageUrl', // Use imageBaseUrl from AppConfig
                     fit: BoxFit.cover,
                     placeholder: (context, url) => const CircularProgressIndicator(),
                     errorWidget: (context, url, error) {

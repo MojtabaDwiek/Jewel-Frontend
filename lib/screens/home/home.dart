@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
 import 'package:iconify_flutter_plus/icons/bx.dart';
+import 'package:pn_fl_jewellery_empire/app_config.dart';
 import 'package:pn_fl_jewellery_empire/screens/bottom_bar.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pn_fl_jewellery_empire/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -255,8 +257,8 @@ class _HomeScreenState extends State<HomeScreen> {
               imageUrls = List<String>.from(product['images']);
             }
             String imageUrl = imageUrls.isNotEmpty
-                ? 'http://192.168.0.110:8000/storage/${imageUrls[0]}'
-                : 'http://192.168.0.110:8000/storage/default_image.png';
+                ? '${AppConfig.imageBaseUrl}/${imageUrls[0]}' // Use the first image
+                : AppConfig.fallbackImageUrl; // Fallback image
 
             return GestureDetector(
               onTap: () {

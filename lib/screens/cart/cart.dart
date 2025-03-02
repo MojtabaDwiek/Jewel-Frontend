@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
 import 'package:iconify_flutter_plus/icons/ph.dart';
 import 'package:iconify_flutter_plus/icons/uil.dart';
+import 'package:pn_fl_jewellery_empire/app_config.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
 import 'package:pn_fl_jewellery_empire/widget/column_builder.dart';
 import 'package:provider/provider.dart'; // Import Provider
@@ -11,6 +12,7 @@ import 'package:http/http.dart' as http; // For API calls
 import 'package:url_launcher/url_launcher.dart'; // For opening WhatsApp
 import 'dart:convert'; // For JSON parsing
 import 'package:shared_preferences/shared_preferences.dart'; // For token storage
+
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -41,8 +43,7 @@ class _CartScreenState extends State<CartScreen> {
 
   // Method to fetch retailer's phone number
   Future<String?> fetchRetailerPhone(String userId) async {
-    const baseUrl = 'http://192.168.0.110:8000/api'; // Replace with your backend URL
-    final url = Uri.parse('$baseUrl/customers/$userId/retailer-phone');
+    final url = Uri.parse('${AppConfig.baseUrl}/customers/$userId/retailer-phone');
 
     try {
       final response = await http.get(url);
@@ -83,78 +84,77 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   // Updated proceedToCheckout method
-  Widget proceedToCheckout() {
-    return GestureDetector(
-      onTap: () async {
-        if (_isLoadingCheckout) return; // Prevent multiple taps
+ Widget proceedToCheckout() {
+  return GestureDetector(
+    onTap: () async {
+      if (_isLoadingCheckout) return; // Prevent multiple taps
 
-        setState(() {
-          _isLoadingCheckout = true; // Show loading indicator
-        });
+      setState(() {
+        _isLoadingCheckout = true; // Show loading indicator
+      });
 
-        try {
-          // Fetch the user ID (customer_id or retailer_id)
-          final userId = await fetchUserId();
+      try {
+        // Fetch the user ID (customer_id or retailer_id)
+        final userId = await fetchUserId();
 
-          if (userId == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('User ID not found'),
-              ),
-            );
-            return;
-          }
-
-          // Generate the premade checkout message
-          final cartProvider = Provider.of<CartProvider>(context, listen: false);
-          final checkoutMessage = cartProvider.generateCheckoutMessage();
-
-          // Check if the user is a retailer
-          final prefs = await SharedPreferences.getInstance();
-          final retailerId = prefs.getString('retailer_id');
-
-          if (retailerId != null) {
-            // User is a retailer: Open a specified WhatsApp chat
-            const supportPhoneNumber = '+96170764354'; // Replace with the support number
-            await openWhatsApp(supportPhoneNumber, message: checkoutMessage);
-          } else {
-            // User is a customer: Fetch the retailer's phone number
-            final phoneNumber = await fetchRetailerPhone(userId);
-
-            if (phoneNumber != null) {
-              // Open WhatsApp with the retailer's phone number and the checkout message
-              await openWhatsApp(phoneNumber, message: checkoutMessage);
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Retailer phone number not found'),
-                ),
-              );
-            }
-          }
-        } catch (e) {
+        if (userId == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: $e'),
+            const SnackBar(
+              content: Text('User ID not found'),
             ),
           );
-        } finally {
-          if (!_isDisposed && mounted) {
-            setState(() {
-              _isLoadingCheckout = false; // Hide loading indicator
-            });
+          return;
+        }
+
+        // Generate the premade checkout message
+        final cartProvider = Provider.of<CartProvider>(context, listen: false);
+        final checkoutMessage = cartProvider.generateCheckoutMessage();
+
+        // Check if the user is a retailer
+        final prefs = await SharedPreferences.getInstance();
+        final retailerId = prefs.getString('retailer_id');
+
+        if (retailerId != null) {
+          // User is a retailer: Open a specified WhatsApp chat
+          await openWhatsApp(AppConfig.supportPhoneNumber, message: checkoutMessage);
+        } else {
+          // User is a customer: Fetch the retailer's phone number
+          final phoneNumber = await fetchRetailerPhone(userId);
+
+          if (phoneNumber != null) {
+            // Open WhatsApp with the retailer's phone number and the checkout message
+            await openWhatsApp(phoneNumber, message: checkoutMessage);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Retailer phone number not found'),
+              ),
+            );
           }
         }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: fixPadding * 2.0, vertical: fixPadding * 1.5),
-        width: double.maxFinite,
-        decoration: BoxDecoration(
-          color: blackColor,
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        alignment: Alignment.center,
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+          ),
+        );
+      } finally {
+        if (!_isDisposed && mounted) {
+          setState(() {
+            _isLoadingCheckout = false; // Hide loading indicator
+          });
+        }
+      }
+    },
+    child: Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: fixPadding * 2.0, vertical: fixPadding * 1.5),
+      width: double.maxFinite,
+      decoration: BoxDecoration(
+        color: blackColor,
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: Center( // Use Center to align the child
         child: _isLoadingCheckout
             ? const SizedBox(
                 height: 20,
@@ -168,8 +168,9 @@ class _CartScreenState extends State<CartScreen> {
                 style: medium19White,
               ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   void dispose() {
@@ -272,11 +273,10 @@ class _CartScreenState extends State<CartScreen> {
       itemBuilder: (context, index) {
         final item = cartProvider.cartItems[index];
 
-        // Base URL for images
-        const baseUrl = 'http://192.168.0.110:8000/storage/'; // Replace with your actual server URL
+        // Use the image URL from AppConfig
         final imageUrl = item.imageUrl != null && item.imageUrl!.isNotEmpty
-            ? '$baseUrl${item.imageUrl}' // Prepend the base URL to the image URL
-            : 'https://example.com/fallback-image.jpg'; // Fallback image URL
+            ? '${AppConfig.imageBaseUrl}/${item.imageUrl}' // Prepend the base URL to the image URL
+            : AppConfig.fallbackImageUrl; // Fallback image URL
 
         return Container(
           padding: const EdgeInsets.all(fixPadding),

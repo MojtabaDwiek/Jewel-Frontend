@@ -110,7 +110,12 @@ class CartProvider with ChangeNotifier {
         message.writeln("   - Note: ${item.note}");
       }
       message.writeln("   - Quantity: ${item.quantity}");
-      message.writeln("   - Image: See attached image for this product.");
+      if (item.imageUrl != null && item.imageUrl!.isNotEmpty) {
+        // Add a placeholder for the image
+        message.writeln("   - Image: See attached image for this product.");
+      } else {
+        message.writeln("   - Image: No image available");
+      }
       message.writeln("---------------------");
     }
 
@@ -149,9 +154,6 @@ class CartProvider with ChangeNotifier {
 
             // Add the image file to the list
             imageFiles.add(XFile(file.path));
-
-            // Break after processing the first image for this item
-            break;
           }
         }
       }
@@ -165,7 +167,7 @@ class CartProvider with ChangeNotifier {
       imageFiles.add(XFile(textFile.path));
 
       // Share the files (images and text file)
-      await Share.shareXFiles(imageFiles);
+      await Share.shareXFiles(imageFiles, text: "Order Summary");
     } catch (e) {
       // Handle any errors
       print("Error sharing cart: $e");
