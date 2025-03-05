@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
-import 'package:http/http.dart' as http;
 import 'Models/CartItem.dart'; // Import CartItem model
+import 'app_config.dart'; // Import AppConfig
 
 class CartProvider with ChangeNotifier {
   final List<CartItem> _cartItems = [];
@@ -73,7 +71,7 @@ class CartProvider with ChangeNotifier {
     return _cartItems.fold(0, (sum, item) => sum + item.quantity);
   }
 
-  // Generate a checkout message including item details
+  // Generate a checkout message including item details and image URLs
   String generateCheckoutMessage() {
     StringBuffer message = StringBuffer();
 
@@ -110,9 +108,11 @@ class CartProvider with ChangeNotifier {
         message.writeln("   - Note: ${item.note}");
       }
       message.writeln("   - Quantity: ${item.quantity}");
+
+      // Add the image URL under each item
       if (item.imageUrl != null && item.imageUrl!.isNotEmpty) {
-        // Add a placeholder for the image
-        message.writeln("   - Image: See attached image for this product.");
+        final fullImageUrl = '${AppConfig.imageBaseUrl}/${item.imageUrl}';
+        message.writeln("   - Image: $fullImageUrl");
       } else {
         message.writeln("   - Image: No image available");
       }
@@ -130,44 +130,14 @@ class CartProvider with ChangeNotifier {
     return message.toString();
   }
 
-  // Share the cart details with the first image of each cart item
+  // Share the cart details with image URLs included in the message
   Future<void> shareCartWithImages() async {
     try {
-      // Generate the message
+      // Generate the message (which now includes image URLs)
       final message = generateCheckoutMessage();
 
-      // Prepare a list of XFiles for the first image of each cart item
-      List<XFile> imageFiles = [];
-
-      for (var item in _cartItems) {
-        if (item.imageUrl != null && item.imageUrl!.isNotEmpty) {
-          // Construct the full image URL
-          const baseUrl = 'http://192.168.0.110:8000/storage/'; // Replace with your server URL
-          final fullImageUrl = '$baseUrl${item.imageUrl}';
-
-          // Download the first image from the URL
-          final response = await http.get(Uri.parse(fullImageUrl));
-          if (response.statusCode == 200) {
-            final tempDir = await getTemporaryDirectory();
-            final file = File('${tempDir.path}/${item.id}.jpg');
-            await file.writeAsBytes(response.bodyBytes);
-
-            // Add the image file to the list
-            imageFiles.add(XFile(file.path));
-          }
-        }
-      }
-
-      // Create a text file with the message
-      final tempDir = await getTemporaryDirectory();
-      final textFile = File('${tempDir.path}/order_summary.txt');
-      await textFile.writeAsString(message);
-
-      // Add the text file to the list of files
-      imageFiles.add(XFile(textFile.path));
-
-      // Share the files (images and text file)
-      await Share.shareXFiles(imageFiles, text: "Order Summary");
+      // Share the message
+      await Share.share(message);
     } catch (e) {
       // Handle any errors
       print("Error sharing cart: $e");

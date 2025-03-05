@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.0.110:8000/api'; // Use HTTP for local development
+  static const String baseUrl = 'https://jewel-backend-development-m8sfwl.laravel.cloud/api'; // Use HTTP for local development
 
   // Helper method to get the token from SharedPreferences
   static Future<String?> _getToken() async {
