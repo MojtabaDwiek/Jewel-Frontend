@@ -7,7 +7,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pn_fl_jewellery_empire/services/api_service.dart'; // Import your API service
 import 'package:shared_preferences/shared_preferences.dart'; // For SharedPreferences
 
-
 class FavouriteScreen extends StatefulWidget {
   const FavouriteScreen({super.key});
 
@@ -105,15 +104,29 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
+      body: Stack(
         children: [
-          _header(),
-          Expanded(
-            child: _isLoading
-                ? _loadingIndicator() // Show loading indicator if data is still being fetched
-                : favouriteList.isEmpty
-                    ? _emptyListContent()
-                    : _favouriteListContent(),
+          // Background Image
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("assets/bk.jpg"), // Background image
+                fit: BoxFit.cover, // Cover the entire screen
+              ),
+            ),
+          ),
+          // Main Content
+          Column(
+            children: [
+              _header(),
+              Expanded(
+                child: _isLoading
+                    ? _loadingIndicator() // Show loading indicator if data is still being fetched
+                    : favouriteList.isEmpty
+                        ? _emptyListContent()
+                        : _favouriteListContent(),
+              ),
+            ],
           ),
         ],
       ),
@@ -189,7 +202,18 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
             decoration: BoxDecoration(
               color: whiteColor,
               borderRadius: BorderRadius.circular(10.0),
-              border: Border.all(color: borderColor),
+              border: Border.all(
+                color: const Color(0xFFD4AF37), // Light gold border
+                width: 2.0,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color.fromARGB(255, 2, 2, 2).withOpacity(0.4),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: const Offset(0, 3), // Shadow position
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,7 +284,12 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
   Widget _header() {
     return Container(
       padding: const EdgeInsets.only(top: fixPadding),
-      decoration: headerBoxDecoration,
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage("assets/bk.jpg"), // Background image
+          fit: BoxFit.cover, // Cover the entire header
+        ),
+      ),
       child: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,

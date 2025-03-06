@@ -8,7 +8,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pn_fl_jewellery_empire/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -80,36 +79,51 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: Colors.grey[200], // Light grey background for the body
+      body: Stack(
         children: [
-          header(),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _errorMessage.isNotEmpty
-                    ? Center(
-                        child: Text(
-                          _errorMessage,
-                          style: const TextStyle(color: Colors.red, fontSize: 16),
-                        ),
-                      )
-                    : RefreshIndicator(
-                        onRefresh: _fetchProducts,
-                        child: ListView(
-                          shrinkWrap: true,
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.only(top: fixPadding * 2.0),
-                          children: [
-                            posterWidget(),
-                            const SizedBox(height: 20),
-                            categoryListContent(),
-                            const SizedBox(height: 20),
-                            popularListContent(),
-                          ],
-                        ),
-                      ),
-          )
+          // Background Image
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("assets/bk.jpg"), // Background image
+                fit: BoxFit.cover, // Cover the entire screen
+              ),
+            ),
+          ),
+          // Main Content
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              header(),
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _errorMessage.isNotEmpty
+                        ? Center(
+                            child: Text(
+                              _errorMessage,
+                              style: const TextStyle(color: Colors.red, fontSize: 16),
+                            ),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: _fetchProducts,
+                            child: ListView(
+                              shrinkWrap: true,
+                              physics: const BouncingScrollPhysics(),
+                              padding: const EdgeInsets.only(top: fixPadding * 2.0),
+                              children: [
+                                posterWidget(),
+                                const SizedBox(height: 20),
+                                categoryListContent(),
+                                const SizedBox(height: 20),
+                                popularListContent(),
+                              ],
+                            ),
+                          ),
+              )
+            ],
+          ),
         ],
       ),
     );
@@ -136,6 +150,18 @@ class _HomeScreenState extends State<HomeScreen> {
             image: AssetImage(poster['image'].toString()),
             fit: BoxFit.cover,
           ),
+          border: Border.all(
+            color: const Color(0xFFD4AF37), // Light gold color
+            width: 2.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color.fromARGB(255, 2, 2, 2).withOpacity(0.4),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: const Offset(0, 3), // changes position of shadow
+            ),
+          ],
         ),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
@@ -159,6 +185,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   color: whiteColor,
                   borderRadius: BorderRadius.circular(5.0),
+                  border: Border.all(
+                    color: const Color(0xFFD4AF37), // Light gold color
+                    width: 1.5,
+                  ),
                 ),
                 child: const Text(
                   "Order Now",
@@ -202,7 +232,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     decoration: BoxDecoration(
                       color: whiteColor,
                       borderRadius: BorderRadius.circular(10.0),
-                      border: Border.all(color: borderColor),
+                      border: Border.all(
+                        color: const Color(0xFFD4AF37), // Light gold color
+                        width: 2.0,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color.fromARGB(255, 2, 2, 2).withOpacity(0.4),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: const Offset(0, 3), // changes position of shadow
+                        ),
+                      ],
                     ),
                     child: Column(
                       children: [
@@ -274,7 +315,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   color: whiteColor,
                   borderRadius: BorderRadius.circular(10.0),
-                  border: Border.all(color: borderColor),
+                  border: Border.all(
+                    color: const Color(0xFFD4AF37), // Light gold color
+                    width: 2.0,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color.fromARGB(255, 2, 2, 2).withOpacity(0.4),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: const Offset(0, 3), // changes position of shadow
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,11 +392,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget header() {
     return Container(
       padding: const EdgeInsets.only(top: fixPadding),
-      decoration: headerBoxDecoration,
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage("assets/bk.jpg"), // Background image
+          fit: BoxFit.cover, // Cover the entire header
+        ),
+        
+      ),
       child: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0.0,
+        backgroundColor: Colors.transparent, // Make AppBar transparent
+        elevation: 0.0, // Remove shadow
         titleSpacing: 0.0,
         centerTitle: true,
         title: const Text(

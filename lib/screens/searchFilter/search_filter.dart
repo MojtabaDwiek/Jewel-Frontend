@@ -10,12 +10,11 @@ class SearchFilterScreen extends StatefulWidget {
 
 class _SearchFilterScreenState extends State<SearchFilterScreen>
     with SingleTickerProviderStateMixin {
-  final sizeList = ["46", "48", "50", "52", "56", "58", "60"];
-  final lengthList = ["1", "18", "20", "22", "24", "26", "28"];
-  final weightList = ["1", "20", "30", "40", "50", "60", "70"];
+  // Define carat and weight options
+  final caratList = ["18", "21"];
+  final weightList = ["200", "400", "600", "800", "1000", "1200", "1400"];
 
-  List<String> selectedSizes = [];
-  List<String> selectedLengths = [];
+  List<String> selectedCarats = [];
   List<String> selectedWeights = [];
 
   late TabController _tabController;
@@ -23,7 +22,8 @@ class _SearchFilterScreenState extends State<SearchFilterScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    // Two tabs: one for carat and one for weight
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -44,8 +44,7 @@ class _SearchFilterScreenState extends State<SearchFilterScreen>
             unselectedLabelColor: greyColor,
             indicatorColor: blackColor,
             tabs: const [
-              Tab(text: "Size"),
-              Tab(text: "Length"),
+              Tab(text: "Carat"),
               Tab(text: "Weight"),
             ],
           ),
@@ -53,9 +52,8 @@ class _SearchFilterScreenState extends State<SearchFilterScreen>
             child: TabBarView(
               controller: _tabController,
               children: [
-                sizeFilter(),
-                lengthFilter(),
-                weightFilter(),
+                caratFilter(), // Carat filter
+                weightFilter(), // Weight filter
               ],
             ),
           ),
@@ -65,7 +63,8 @@ class _SearchFilterScreenState extends State<SearchFilterScreen>
     );
   }
 
-  Widget sizeFilter() {
+  // Carat filter widget
+  Widget caratFilter() {
     return ListView(
       padding: const EdgeInsets.all(fixPadding * 2.0),
       children: [
@@ -73,21 +72,21 @@ class _SearchFilterScreenState extends State<SearchFilterScreen>
           spacing: fixPadding,
           runSpacing: fixPadding,
           children: List.generate(
-            sizeList.length,
+            caratList.length,
             (index) {
               return InkWell(
                 onTap: () {
                   setState(() {
-                    if (selectedSizes.contains(sizeList[index])) {
-                      selectedSizes.remove(sizeList[index]);
+                    if (selectedCarats.contains(caratList[index])) {
+                      selectedCarats.remove(caratList[index]);
                     } else {
-                      selectedSizes.add(sizeList[index]);
+                      selectedCarats.add(caratList[index]);
                     }
                   });
                 },
-                child: selectedSizes.contains(sizeList[index])
-                    ? selectedWidget(sizeList[index])
-                    : unselectedWidget(sizeList[index]),
+                child: selectedCarats.contains(caratList[index])
+                    ? selectedWidget(caratList[index])
+                    : unselectedWidget(caratList[index]),
               );
             },
           ),
@@ -96,77 +95,56 @@ class _SearchFilterScreenState extends State<SearchFilterScreen>
     );
   }
 
-  Widget lengthFilter() {
-    return ListView(
-      padding: const EdgeInsets.all(fixPadding * 2.0),
-      children: [
-        Wrap(
-          spacing: fixPadding,
-          runSpacing: fixPadding,
-          children: List.generate(
-            lengthList.length,
-            (index) {
-              return InkWell(
-                onTap: () {
-                  setState(() {
-                    if (selectedLengths.contains(lengthList[index])) {
-                      selectedLengths.remove(lengthList[index]);
-                    } else {
-                      selectedLengths.add(lengthList[index]);
-                    }
-                  });
-                },
-                child: selectedLengths.contains(lengthList[index])
-                    ? selectedWidget(lengthList[index])
-                    : unselectedWidget(lengthList[index]),
-              );
-            },
-          ),
-        )
-      ],
-    );
-  }
-
+  // Weight filter widget
   Widget weightFilter() {
-    return ListView(
-      padding: const EdgeInsets.all(fixPadding * 2.0),
-      children: [
-        Wrap(
-          spacing: fixPadding,
-          runSpacing: fixPadding,
-          children: List.generate(
-            weightList.length,
-            (index) {
-              return InkWell(
-                onTap: () {
-                  setState(() {
-                    if (selectedWeights.contains(weightList[index])) {
-                      selectedWeights.remove(weightList[index]);
-                    } else {
-                      selectedWeights.add(weightList[index]);
-                    }
-                  });
-                },
-                child: selectedWeights.contains(weightList[index])
-                    ? selectedWidget(weightList[index])
-                    : unselectedWidget(weightList[index]),
-              );
-            },
-          ),
-        )
-      ],
-    );
-  }
+  return ListView(
+    padding: const EdgeInsets.all(fixPadding * 2.0),
+    children: [
+      Wrap(
+        spacing: fixPadding,
+        runSpacing: fixPadding,
+        children: List.generate(
+          weightList.length,
+          (index) {
+            return InkWell(
+              onTap: () {
+                setState(() {
+                  final selectedWeight = weightList[index];
+                  // Convert weightList to integers for comparison
+                  final selectedWeightValue = int.parse(selectedWeight);
 
-  applyButton(BuildContext context) {
+                  // Clear the selectedWeights list
+                  selectedWeights.clear();
+
+                  // Add all weights less than or equal to the selected weight
+                  for (final weight in weightList) {
+                    final weightValue = int.parse(weight);
+                    if (weightValue <= selectedWeightValue) {
+                      selectedWeights.add(weight);
+                    }
+                  }
+                });
+              },
+              child: selectedWeights.contains(weightList[index])
+                  ? selectedWidget(weightList[index])
+                  : unselectedWidget(weightList[index]),
+            );
+          },
+        ),
+      )
+    ],
+  );
+}
+
+  // Apply button
+  Widget applyButton(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: GestureDetector(
         onTap: () {
-          // Pass the selected filters back to the SearchScreen
+          // Pass the selected carat and weight filters back to the SearchScreen
           Navigator.pop(context, {
-            'sizes': selectedSizes,
-            'lengths': selectedLengths,
+            'carats': selectedCarats,
             'weights': selectedWeights,
           });
         },
@@ -189,7 +167,8 @@ class _SearchFilterScreenState extends State<SearchFilterScreen>
     );
   }
 
-  unselectedWidget(String title) {
+  // Unselected widget
+  Widget unselectedWidget(String title) {
     return Container(
       padding: const EdgeInsets.symmetric(
           horizontal: fixPadding * 2.0, vertical: fixPadding * 0.6),
@@ -205,7 +184,8 @@ class _SearchFilterScreenState extends State<SearchFilterScreen>
     );
   }
 
-  selectedWidget(String title) {
+  // Selected widget
+  Widget selectedWidget(String title) {
     return Container(
       padding: const EdgeInsets.symmetric(
           horizontal: fixPadding * 2.0, vertical: fixPadding * 0.6),
@@ -220,7 +200,8 @@ class _SearchFilterScreenState extends State<SearchFilterScreen>
     );
   }
 
-  header(BuildContext context) {
+  // Header widget
+  Widget header(BuildContext context) {
     return Container(
       padding: const EdgeInsets.only(top: fixPadding),
       decoration: headerBoxDecoration,

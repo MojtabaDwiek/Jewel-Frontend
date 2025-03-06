@@ -6,7 +6,7 @@ import 'package:pn_fl_jewellery_empire/app_config.dart';
 import 'package:pn_fl_jewellery_empire/theme/theme.dart';
 import 'package:pn_fl_jewellery_empire/services/api_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-
+import 'package:pn_fl_jewellery_empire/screens/searchfilter/search_filter.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -19,6 +19,8 @@ class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<dynamic> _allProducts = []; // To store all products
   List<dynamic> _searchResults = []; // To store search results
+  List<String> _selectedCarats = []; // To store selected carat filters
+  List<String> _selectedWeights = []; // To store selected weight filters
   bool _isLoading = false;
   String _errorMessage = '';
   bool _isDisposed = false;
@@ -48,6 +50,7 @@ class _SearchScreenState extends State<SearchScreen> {
       if (!_isDisposed && mounted) {
         setState(() {
           _allProducts = products;
+          _searchResults = products; // Initialize search results with all products
         });
       }
     } catch (e) {
@@ -73,36 +76,63 @@ class _SearchScreenState extends State<SearchScreen> {
           .where((product) =>
               product['name'].toLowerCase().contains(query.toLowerCase()))
           .toList();
+      _applyFilters(); // Apply filters after performing the search
+    });
+  }
+
+  void _applyFilters() {
+    setState(() {
+      _searchResults = _allProducts.where((product) {
+        bool matchesCarat = _selectedCarats.isEmpty ||
+            _selectedCarats.contains(product['carat'].toString());
+        bool matchesWeight = _selectedWeights.isEmpty ||
+            _selectedWeights.contains(product['weight'].toString());
+        return matchesCarat && matchesWeight;
+      }).toList();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        left: false,
-        right: false,
-        child: Column(
-          children: [
-            height5Space,
-            searchField(),
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _errorMessage.isNotEmpty
-                      ? Center(
-                          child: Text(
-                            _errorMessage,
-                            style: const TextStyle(color: Colors.red, fontSize: 16),
-                          ),
-                        )
-                      : _searchController.text.isEmpty
-                          ? _buildDefaultContent()
-                          : _buildSearchResults(),
-            )
-          ],
-        ),
+      body: Stack(
+        children: [
+          // Background Image
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("assets/bk.jpg"), // Background image
+                fit: BoxFit.cover, // Cover the entire screen
+              ),
+            ),
+          ),
+          // Main Content
+          SafeArea(
+            bottom: false,
+            left: false,
+            right: false,
+            child: Column(
+              children: [
+                height5Space,
+                searchField(),
+                Expanded(
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _errorMessage.isNotEmpty
+                          ? Center(
+                              child: Text(
+                                _errorMessage,
+                                style: const TextStyle(color: Colors.red, fontSize: 16),
+                              ),
+                            )
+                          : _searchController.text.isEmpty
+                              ? _buildDefaultContent()
+                              : _buildSearchResults(),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -122,102 +152,115 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
- Widget _buildSearchResults() {
-  return GridView.builder(
-    shrinkWrap: true,
-    physics: const BouncingScrollPhysics(),
-    padding: const EdgeInsets.all(fixPadding * 2.0),
-    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 2,
-      mainAxisSpacing: fixPadding * 2.0,
-      crossAxisSpacing: fixPadding * 2.0,
-      childAspectRatio: 0.8,
-    ),
-    itemCount: _searchResults.length,
-    itemBuilder: (context, index) {
-      final product = _searchResults[index];
+  Widget _buildSearchResults() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(fixPadding * 2.0),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: fixPadding * 2.0,
+        crossAxisSpacing: fixPadding * 2.0,
+        childAspectRatio: 0.8,
+      ),
+      itemCount: _searchResults.length,
+      itemBuilder: (context, index) {
+        final product = _searchResults[index];
 
-      // Ensure that the 'images' field is not null or empty
-      List<String> imageUrls = [];
-      if (product['images'] != null && product['images'].isNotEmpty) {
-        imageUrls = List<String>.from(product['images']);
-      }
+        // Ensure that the 'images' field is not null or empty
+        List<String> imageUrls = [];
+        if (product['images'] != null && product['images'].isNotEmpty) {
+          imageUrls = List<String>.from(product['images']);
+        }
 
-      // Construct the image URL
-      String imageUrl = imageUrls.isNotEmpty
-          ? '${AppConfig.imageBaseUrl}/${imageUrls[0]}' // Use the first image
-          : AppConfig.fallbackImageUrl; // Use fallback image URL from AppConfig
+        // Construct the image URL
+        String imageUrl = imageUrls.isNotEmpty
+            ? '${AppConfig.imageBaseUrl}/${imageUrls[0]}' // Use the first image
+            : AppConfig.fallbackImageUrl; // Use fallback image URL from AppConfig
 
-      // Debug the image URL
-      print('Image URL: $imageUrl');
-
-      return GestureDetector(
-        onTap: () {
-          Navigator.pushNamed(
-            context,
-            '/productDetail',
-            arguments: product['id'], // Pass the product ID
-          );
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
-          width: double.maxFinite,
-          decoration: BoxDecoration(
-            color: whiteColor,
-            borderRadius: BorderRadius.circular(10.0),
-            border: Border.all(color: borderColor),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Center(
-                  child: CachedNetworkImage(
-                    imageUrl: imageUrl, // Use the constructed URL
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => const CircularProgressIndicator(),
-                    errorWidget: (context, url, error) {
-                      print('Error loading image: $error');
-                      return const Icon(Icons.error); // Display an error icon
-                    },
-                    memCacheHeight: 200, // Optimize image caching
-                    memCacheWidth: 200, // Optimize image caching
+        return GestureDetector(
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              '/productDetail',
+              arguments: product['id'], // Pass the product ID
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
+            width: double.maxFinite,
+            decoration: BoxDecoration(
+              color: whiteColor,
+              borderRadius: BorderRadius.circular(10.0),
+              border: Border.all(
+                color: const Color(0xFFD4AF37), // Light gold border
+                width: 2.0,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color.fromARGB(255, 2, 2, 2).withOpacity(0.4),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: const Offset(0, 3), // Shadow position
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Center(
+                    child: CachedNetworkImage(
+                      imageUrl: imageUrl, // Use the constructed URL
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => const CircularProgressIndicator(),
+                      errorWidget: (context, url, error) {
+                        print('Error loading image: $error');
+                        return const Icon(Icons.error); // Display an error icon
+                      },
+                      memCacheHeight: 200, // Optimize image caching
+                      memCacheWidth: 200, // Optimize image caching
+                    ),
                   ),
                 ),
-              ),
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
-                width: double.maxFinite,
-                height: 1.0,
-                color: borderColor,
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: fixPadding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      product['name'],
-                      style: regular16Black,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      '${product['weight']} g', // Display weight
-                      style: semibold16Black,
-                      overflow: TextOverflow.ellipsis,
-                    )
-                  ],
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: fixPadding * 1.5),
+                  width: double.maxFinite,
+                  height: 1.0,
+                  color: borderColor,
                 ),
-              )
-            ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: fixPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product['name'],
+                        style: regular16Black,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        '${product['weight']} g', // Display weight
+                        style: semibold16Black,
+                        overflow: TextOverflow.ellipsis,
+                      )
+                    ],
+                  ),
+                )
+              ],
+            ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   Widget popularListContent() {
+    // Get the last 10 products from the _allProducts list
+    final lastTenProducts = _allProducts.length <= 10
+        ? _allProducts // If there are 10 or fewer products, use all of them
+        : _allProducts.sublist(_allProducts.length - 10); // Otherwise, take the last 10
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -239,9 +282,9 @@ class _SearchScreenState extends State<SearchScreen> {
             crossAxisSpacing: fixPadding * 2.0,
             childAspectRatio: 0.8,
           ),
-          itemCount: _allProducts.length > 6 ? 6 : _allProducts.length, // Limit to 6 products
+          itemCount: lastTenProducts.length, // Use the last 10 products
           itemBuilder: (context, index) {
-            final product = _allProducts[index];
+            final product = lastTenProducts[index];
 
             // Ensure that the 'images' field is not null or empty
             List<String> imageUrls = [];
@@ -268,7 +311,18 @@ class _SearchScreenState extends State<SearchScreen> {
                 decoration: BoxDecoration(
                   color: whiteColor,
                   borderRadius: BorderRadius.circular(10.0),
-                  border: Border.all(color: borderColor),
+                  border: Border.all(
+                    color: const Color(0xFFD4AF37), // Light gold border
+                    width: 2.0,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color.fromARGB(255, 2, 2, 2).withOpacity(0.4),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: const Offset(0, 3), // Shadow position
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -357,8 +411,23 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: fixPadding),
           suffixIcon: IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/searchFilter');
+            onPressed: () async {
+              // Open the filter screen and await the result
+              final filterResult = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SearchFilterScreen()),
+              );
+
+              if (filterResult != null) {
+                // Update selected filters
+                setState(() {
+                  _selectedCarats = filterResult['carats'];
+                  _selectedWeights = filterResult['weights'];
+                });
+
+                // Apply filters to the search results
+                _applyFilters();
+              }
             },
             icon: const Iconify(
               Ph.sliders,

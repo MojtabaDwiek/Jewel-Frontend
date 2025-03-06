@@ -13,7 +13,6 @@ import 'package:url_launcher/url_launcher.dart'; // For opening WhatsApp
 import 'dart:convert'; // For JSON parsing
 import 'package:shared_preferences/shared_preferences.dart'; // For token storage
 
-
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
 
@@ -84,93 +83,105 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   // Updated proceedToCheckout method
- Widget proceedToCheckout() {
-  return GestureDetector(
-    onTap: () async {
-      if (_isLoadingCheckout) return; // Prevent multiple taps
+  Widget proceedToCheckout() {
+    return GestureDetector(
+      onTap: () async {
+        if (_isLoadingCheckout) return; // Prevent multiple taps
 
-      setState(() {
-        _isLoadingCheckout = true; // Show loading indicator
-      });
+        setState(() {
+          _isLoadingCheckout = true; // Show loading indicator
+        });
 
-      try {
-        // Fetch the user ID (customer_id or retailer_id)
-        final userId = await fetchUserId();
+        try {
+          // Fetch the user ID (customer_id or retailer_id)
+          final userId = await fetchUserId();
 
-        if (userId == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('User ID not found'),
-            ),
-          );
-          return;
-        }
-
-        // Generate the premade checkout message
-        final cartProvider = Provider.of<CartProvider>(context, listen: false);
-        final checkoutMessage = cartProvider.generateCheckoutMessage();
-
-        // Check if the user is a retailer
-        final prefs = await SharedPreferences.getInstance();
-        final retailerId = prefs.getString('retailer_id');
-
-        if (retailerId != null) {
-          // User is a retailer: Open a specified WhatsApp chat
-          await openWhatsApp(AppConfig.supportPhoneNumber, message: checkoutMessage);
-        } else {
-          // User is a customer: Fetch the retailer's phone number
-          final phoneNumber = await fetchRetailerPhone(userId);
-
-          if (phoneNumber != null) {
-            // Open WhatsApp with the retailer's phone number and the checkout message
-            await openWhatsApp(phoneNumber, message: checkoutMessage);
-          } else {
+          if (userId == null) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Retailer phone number not found'),
+                content: Text('User ID not found'),
               ),
             );
+            return;
+          }
+
+          // Generate the premade checkout message
+          final cartProvider = Provider.of<CartProvider>(context, listen: false);
+          final checkoutMessage = cartProvider.generateCheckoutMessage();
+
+          // Check if the user is a retailer
+          final prefs = await SharedPreferences.getInstance();
+          final retailerId = prefs.getString('retailer_id');
+
+          if (retailerId != null) {
+            // User is a retailer: Open a specified WhatsApp chat
+            await openWhatsApp(AppConfig.supportPhoneNumber, message: checkoutMessage);
+          } else {
+            // User is a customer: Fetch the retailer's phone number
+            final phoneNumber = await fetchRetailerPhone(userId);
+
+            if (phoneNumber != null) {
+              // Open WhatsApp with the retailer's phone number and the checkout message
+              await openWhatsApp(phoneNumber, message: checkoutMessage);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Retailer phone number not found'),
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: $e'),
+            ),
+          );
+        } finally {
+          if (!_isDisposed && mounted) {
+            setState(() {
+              _isLoadingCheckout = false; // Hide loading indicator
+            });
           }
         }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: fixPadding * 2.0, vertical: fixPadding * 1.5),
+        width: double.maxFinite,
+        decoration: BoxDecoration(
+          color: blackColor,
+          borderRadius: BorderRadius.circular(10.0),
+          border: Border.all(
+            color: const Color(0xFFD4AF37), // Light gold border
+            width: 2.0,
           ),
-        );
-      } finally {
-        if (!_isDisposed && mounted) {
-          setState(() {
-            _isLoadingCheckout = false; // Hide loading indicator
-          });
-        }
-      }
-    },
-    child: Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: fixPadding * 2.0, vertical: fixPadding * 1.5),
-      width: double.maxFinite,
-      decoration: BoxDecoration(
-        color: blackColor,
-        borderRadius: BorderRadius.circular(10.0),
-      ),
-      child: Center( // Use Center to align the child
-        child: _isLoadingCheckout
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          boxShadow: [
+            BoxShadow(
+              color: const Color.fromARGB(255, 2, 2, 2).withOpacity(0.4),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: const Offset(0, 3), // Shadow position
+            ),
+          ],
+        ),
+        child: Center(
+          child: _isLoadingCheckout
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Text(
+                  "Order",
+                  style: medium19White,
                 ),
-              )
-            : const Text(
-                "Proceed to Checkout",
-                style: medium19White,
-              ),
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   void dispose() {
@@ -183,27 +194,39 @@ class _CartScreenState extends State<CartScreen> {
     final cartProvider = Provider.of<CartProvider>(context); // Access CartProvider
 
     return Scaffold(
-      body: Column(
+      body: Stack(
         children: [
-          header(),
-          Expanded(
-            child: cartProvider.cartItems.isEmpty
-                ? emptyListContent()
-                : ListView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(fixPadding * 2.0,
-                        fixPadding, fixPadding * 2.0, fixPadding * 2.0),
-                    children: [
-                      cartItemListContent(cartProvider),
-                      const SizedBox(height: 20), // Use SizedBox for spacing
-                      const SizedBox(height: 20),
-                      weightInfo(cartProvider), // Display total weight
-                      const SizedBox(height: 20),
-                      const SizedBox(height: 20),
-                      proceedToCheckout(), // Updated button
-                    ],
-                  ),
-          )
+          // Background Image
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("assets/bk.jpg"), // Background image
+                fit: BoxFit.cover, // Cover the entire screen
+              ),
+            ),
+          ),
+          // Main Content
+          Column(
+            children: [
+              header(),
+              Expanded(
+                child: cartProvider.cartItems.isEmpty
+                    ? emptyListContent()
+                    : ListView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(fixPadding * 2.0,
+                            fixPadding, fixPadding * 2.0, fixPadding * 2.0),
+                        children: [
+                          cartItemListContent(cartProvider),
+                          const SizedBox(height: 20),
+                          weightInfo(cartProvider), // Display total weight
+                          const SizedBox(height: 20),
+                          proceedToCheckout(), // Updated button
+                        ],
+                      ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -226,7 +249,7 @@ class _CartScreenState extends State<CartScreen> {
             "Cart is Empty",
             style: medium18Grey,
             textAlign: TextAlign.center,
-          )
+          ),
         ],
       ),
     );
@@ -244,7 +267,18 @@ class _CartScreenState extends State<CartScreen> {
       decoration: BoxDecoration(
         color: whiteColor,
         borderRadius: BorderRadius.circular(10.0),
-        border: Border.all(color: borderColor),
+        border: Border.all(
+          color: const Color(0xFFD4AF37), // Light gold border
+          width: 2.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color.fromARGB(255, 2, 2, 2).withOpacity(0.4),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: const Offset(0, 3), // Shadow position
+          ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(fixPadding),
@@ -261,7 +295,7 @@ class _CartScreenState extends State<CartScreen> {
             Text(
               "${totalWeight.toStringAsFixed(2)} g", // Display total weight
               style: semibold16Black,
-            )
+            ),
           ],
         ),
       ),
@@ -285,7 +319,18 @@ class _CartScreenState extends State<CartScreen> {
           decoration: BoxDecoration(
             color: whiteColor,
             borderRadius: BorderRadius.circular(10.0),
-            border: Border.all(color: borderColor),
+            border: Border.all(
+              color: const Color(0xFFD4AF37), // Light gold border
+              width: 2.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color.fromARGB(255, 2, 2, 2).withOpacity(0.4),
+                spreadRadius: 2,
+                blurRadius: 5,
+                offset: const Offset(0, 3), // Shadow position
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -302,7 +347,7 @@ class _CartScreenState extends State<CartScreen> {
                       color: blackColor.withOpacity(0.1),
                       blurRadius: 20.0,
                       offset: const Offset(0, 10),
-                    )
+                    ),
                   ],
                 ),
                 alignment: Alignment.center,
@@ -454,21 +499,26 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget header() {
-    return Container(
-      padding: const EdgeInsets.only(top: fixPadding),
-      decoration: headerBoxDecoration,
-      child: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.transparent,
-        centerTitle: false,
-        titleSpacing: fixPadding * 2.0,
-        elevation: 0.0,
-        title: const Text(
-          "Shopping Cart",
-          style: semibold20Black,
-        ),
+ Widget header() {
+  return Container(
+    padding: const EdgeInsets.only(top: fixPadding),
+    decoration: const BoxDecoration(
+      image: DecorationImage(
+        image: AssetImage("assets/bk.jpg"), // Background image
+        fit: BoxFit.cover, // Cover the entire header
       ),
-    );
-  }
+    ),
+    child: AppBar(
+      automaticallyImplyLeading: false,
+      backgroundColor: Colors.transparent, // Make AppBar transparent
+      centerTitle: false,
+      titleSpacing: fixPadding * 2.0,
+      elevation: 0.0, // Remove shadow
+      title: const Text(
+        "Shopping Cart",
+        style: semibold20Black,
+      ),
+    ),
+  );
+}
 }
