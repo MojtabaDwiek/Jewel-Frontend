@@ -34,7 +34,7 @@ dependencies:
   page_transition: ^2.1.0
   iconify_flutter_plus: ^1.0.3
   pinput: ^4.0.0
-  carousel_slider: ^4.2.1
+  carousel_slider: ^5.0.0
   flutter_xlider: ^3.5.0
   dotted_border: ^2.1.0
   easy_stepper: ^0.8.5

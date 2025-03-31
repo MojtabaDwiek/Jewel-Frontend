@@ -1,0 +1,2 @@
+C:/Users/mojtaba/code/front/Jewel-Frontend/android/app/.cxx/Debug/6l285m38/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/mojtaba/code/front/Jewel-Frontend/android/app/.cxx/Debug/6l285m38/armeabi-v7a/CMakeFiles/rebuild_cache.dir

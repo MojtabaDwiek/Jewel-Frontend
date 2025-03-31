@@ -25,10 +25,6 @@ class _CartScreenState extends State<CartScreen> {
   bool _isDisposed = false; // Track if the widget is disposed
 
   // Method to retrieve the token
-  static Future<String?> _getToken() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
-  }
 
   // Method to fetch the customer ID or retailer ID
   Future<String?> fetchUserId() async {

@@ -10,7 +10,7 @@ import printing
 import share_plus
 import shared_preferences_foundation
 import smart_auth
-import sqflite
+import sqflite_darwin
 import url_launcher_macos
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
