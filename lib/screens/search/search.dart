@@ -17,10 +17,10 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  List<dynamic> _allProducts = []; // To store all products
-  List<dynamic> _searchResults = []; // To store search results
-  List<String> _selectedCarats = []; // To store selected carat filters
-  List<String> _selectedWeights = []; // To store selected weight filters
+  List<dynamic> _allProducts = [];
+  List<dynamic> _searchResults = [];
+  List<String> _selectedCarats = [];
+  List<String> _selectedWeights = [];
   bool _isLoading = false;
   String _errorMessage = '';
   bool _isDisposed = false;
@@ -28,17 +28,18 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchProducts(); // Fetch all products when the screen is initialized
+    _fetchProducts();
   }
 
   @override
   void dispose() {
     _isDisposed = true;
+    _searchController.dispose();
     super.dispose();
   }
 
   Future<void> _fetchProducts() async {
-    if (!mounted) return; // Ensure the widget is still mounted before proceeding
+    if (!mounted) return;
 
     setState(() {
       _isLoading = true;
@@ -46,11 +47,11 @@ class _SearchScreenState extends State<SearchScreen> {
     });
 
     try {
-      final products = await ApiService.fetchProducts(); // Fetch all products
+      final products = await ApiService.fetchProducts();
       if (!_isDisposed && mounted) {
         setState(() {
           _allProducts = products;
-          _searchResults = products; // Initialize search results with all products
+          _searchResults = products;
         });
       }
     } catch (e) {
@@ -69,15 +70,41 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _performSearch(String query) {
-    if (!mounted) return; // Ensure the widget is still mounted before proceeding
+    if (!mounted) return;
 
     setState(() {
-      _searchResults = _allProducts
-          .where((product) =>
-              product['name'].toLowerCase().contains(query.toLowerCase()))
-          .toList();
-      _applyFilters(); // Apply filters after performing the search
+      if (query.isEmpty) {
+        _searchResults = _allProducts;
+      } else {
+        _searchResults = _allProducts.where((product) {
+          final productName = _normalizeText(product['name'].toString());
+          final normalizedQuery = _normalizeText(query);
+          
+          // Check if either the original or normalized text matches
+          return product['name'].toString().toLowerCase().contains(query.toLowerCase()) ||
+                 productName.contains(normalizedQuery);
+        }).toList();
+      }
+      _applyFilters();
     });
+  }
+
+  String _normalizeText(String input) {
+    // Convert to lowercase and trim
+    String normalized = input.toLowerCase().trim();
+    
+    // Remove Arabic diacritics
+    normalized = normalized.replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '');
+    
+    // Normalize Arabic characters
+    normalized = normalized
+      .replaceAll('ة', 'ه')
+      .replaceAll('أ', 'ا')
+      .replaceAll('إ', 'ا')
+      .replaceAll('آ', 'ا')
+      .replaceAll('ى', 'ي');
+    
+    return normalized;
   }
 
   void _applyFilters() {
@@ -87,7 +114,17 @@ class _SearchScreenState extends State<SearchScreen> {
             _selectedCarats.contains(product['carat'].toString());
         bool matchesWeight = _selectedWeights.isEmpty ||
             _selectedWeights.contains(product['weight'].toString());
-        return matchesCarat && matchesWeight;
+        
+        final query = _searchController.text.toLowerCase();
+        final productName = product['name'].toString().toLowerCase();
+        final normalizedProductName = _normalizeText(productName);
+        final normalizedQuery = _normalizeText(query);
+        
+        bool matchesSearch = query.isEmpty || 
+            productName.contains(query) ||
+            normalizedProductName.contains(normalizedQuery);
+            
+        return matchesCarat && matchesWeight && matchesSearch;
       }).toList();
     });
   }
@@ -97,16 +134,14 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background Image
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage("assets/bk.jpg"), // Background image
-                fit: BoxFit.cover, // Cover the entire screen
+                image: AssetImage("assets/bk.jpg"),
+                fit: BoxFit.cover,
               ),
             ),
           ),
-          // Main Content
           SafeArea(
             bottom: false,
             left: false,
@@ -114,7 +149,7 @@ class _SearchScreenState extends State<SearchScreen> {
             child: Column(
               children: [
                 height5Space,
-                searchField(),
+                _buildSearchField(),
                 Expanded(
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
@@ -142,17 +177,26 @@ class _SearchScreenState extends State<SearchScreen> {
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.only(top: fixPadding * 2.0),
       children: [
-        popularSearches(),
-        recentSearch(),
+        _buildPopularSearches(),
+        _buildRecentSearch(),
         heightSpace,
         heightSpace,
         heightSpace,
-        popularListContent(), // Replaced recommendedForYou() with popularListContent()
+        _buildPopularListContent(),
       ],
     );
   }
 
   Widget _buildSearchResults() {
+    if (_searchResults.isEmpty) {
+      return Center(
+        child: Text(
+          'No products found',
+          style: semibold16Black,
+        ),
+      );
+    }
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const BouncingScrollPhysics(),
@@ -166,42 +210,31 @@ class _SearchScreenState extends State<SearchScreen> {
       itemCount: _searchResults.length,
       itemBuilder: (context, index) {
         final product = _searchResults[index];
-
-        // Ensure that the 'images' field is not null or empty
-        List<String> imageUrls = [];
-        if (product['images'] != null && product['images'].isNotEmpty) {
-          imageUrls = List<String>.from(product['images']);
-        }
-
-        // Construct the image URL
-        String imageUrl = imageUrls.isNotEmpty
-            ? '${AppConfig.imageBaseUrl}/${imageUrls[0]}' // Use the first image
-            : AppConfig.fallbackImageUrl; // Use fallback image URL from AppConfig
+        final imageUrl = _getProductImageUrl(product);
 
         return GestureDetector(
           onTap: () {
             Navigator.pushNamed(
               context,
               '/productDetail',
-              arguments: product['id'], // Pass the product ID
+              arguments: product['id'],
             );
           },
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
-            width: double.maxFinite,
             decoration: BoxDecoration(
               color: whiteColor,
               borderRadius: BorderRadius.circular(10.0),
               border: Border.all(
-                color: const Color(0xFFD4AF37), // Light gold border
+                color: const Color(0xFFD4AF37),
                 width: 2.0,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color.fromARGB(255, 2, 2, 2).withOpacity(0.4),
+                  color: Colors.black.withOpacity(0.4),
                   spreadRadius: 2,
                   blurRadius: 5,
-                  offset: const Offset(0, 3), // Shadow position
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
@@ -211,15 +244,12 @@ class _SearchScreenState extends State<SearchScreen> {
                 Expanded(
                   child: Center(
                     child: CachedNetworkImage(
-                      imageUrl: imageUrl, // Use the constructed URL
+                      imageUrl: imageUrl,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => const CircularProgressIndicator(),
-                      errorWidget: (context, url, error) {
-                        print('Error loading image: $error');
-                        return const Icon(Icons.error); // Display an error icon
-                      },
-                      memCacheHeight: 200, // Optimize image caching
-                      memCacheWidth: 200, // Optimize image caching
+                      placeholder: (context, url) => 
+                          const CircularProgressIndicator(),
+                      errorWidget: (context, url, error) => 
+                          const Icon(Icons.error),
                     ),
                   ),
                 ),
@@ -238,9 +268,10 @@ class _SearchScreenState extends State<SearchScreen> {
                         product['name'],
                         style: regular16Black,
                         overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
                       Text(
-                        '${product['weight']} g', // Display weight
+                        '${product['weight']} g | ${product['carat']}K',
                         style: semibold16Black,
                         overflow: TextOverflow.ellipsis,
                       )
@@ -255,11 +286,17 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget popularListContent() {
-    // Get the last 10 products from the _allProducts list
+  String _getProductImageUrl(dynamic product) {
+    final images = product['images'] ?? [];
+    return images.isNotEmpty
+        ? '${AppConfig.imageBaseUrl}/${images[0]}'
+        : AppConfig.fallbackImageUrl;
+  }
+
+  Widget _buildPopularListContent() {
     final lastTenProducts = _allProducts.length <= 10
-        ? _allProducts // If there are 10 or fewer products, use all of them
-        : _allProducts.sublist(_allProducts.length - 10); // Otherwise, take the last 10
+        ? _allProducts
+        : _allProducts.sublist(_allProducts.length - 10);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,7 +304,7 @@ class _SearchScreenState extends State<SearchScreen> {
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
           child: Text(
-            "Latest",
+            "Latest Products",
             style: semibold18Black,
           ),
         ),
@@ -282,45 +319,34 @@ class _SearchScreenState extends State<SearchScreen> {
             crossAxisSpacing: fixPadding * 2.0,
             childAspectRatio: 0.8,
           ),
-          itemCount: lastTenProducts.length, // Use the last 10 products
+          itemCount: lastTenProducts.length,
           itemBuilder: (context, index) {
             final product = lastTenProducts[index];
-
-            // Ensure that the 'images' field is not null or empty
-            List<String> imageUrls = [];
-            if (product['images'] != null && product['images'].isNotEmpty) {
-              imageUrls = List<String>.from(product['images']);
-            }
-
-            // If no images are available, show a fallback image
-            String imageUrl = imageUrls.isNotEmpty
-                ? '${AppConfig.imageBaseUrl}/${imageUrls[0]}' // Use imageBaseUrl from AppConfig
-                : AppConfig.fallbackImageUrl; // Use fallback image URL from AppConfig
+            final imageUrl = _getProductImageUrl(product);
 
             return GestureDetector(
               onTap: () {
                 Navigator.pushNamed(
                   context,
                   '/productDetail',
-                  arguments: product['id'], // Pass the product ID
+                  arguments: product['id'],
                 );
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: fixPadding * 1.9),
-                width: double.maxFinite,
                 decoration: BoxDecoration(
                   color: whiteColor,
                   borderRadius: BorderRadius.circular(10.0),
                   border: Border.all(
-                    color: const Color(0xFFD4AF37), // Light gold border
+                    color: const Color(0xFFD4AF37),
                     width: 2.0,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color.fromARGB(255, 2, 2, 2).withOpacity(0.4),
+                      color: Colors.black.withOpacity(0.4),
                       spreadRadius: 2,
                       blurRadius: 5,
-                      offset: const Offset(0, 3), // Shadow position
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -330,14 +356,12 @@ class _SearchScreenState extends State<SearchScreen> {
                     Expanded(
                       child: Center(
                         child: CachedNetworkImage(
-                          imageUrl: imageUrl, // Display the first image in the array
+                          imageUrl: imageUrl,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => const CircularProgressIndicator(),
-                          errorWidget: (context, url, error) {
-                            return const Icon(Icons.error); // Display an error icon
-                          },
-                          memCacheHeight: 200, // Optimize image caching
-                          memCacheWidth: 200, // Optimize image caching
+                          placeholder: (context, url) => 
+                              const CircularProgressIndicator(),
+                          errorWidget: (context, url, error) => 
+                              const Icon(Icons.error),
                         ),
                       ),
                     ),
@@ -358,9 +382,8 @@ class _SearchScreenState extends State<SearchScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            '${product['weight']} g', // Display weight
+                            '${product['weight']} g',
                             style: semibold16Black,
-                            overflow: TextOverflow.ellipsis,
                           )
                         ],
                       ),
@@ -375,21 +398,22 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget recentSearch() {
-    return const SizedBox(); // Remove recent search functionality
+  Widget _buildRecentSearch() {
+    return const SizedBox();
   }
 
-  Widget popularSearches() {
-    return const SizedBox(); // Remove popular searches functionality
+  Widget _buildPopularSearches() {
+    return const SizedBox();
   }
 
-  Widget searchField() {
+  Widget _buildSearchField() {
     return Padding(
       padding: const EdgeInsets.symmetric(
           horizontal: fixPadding * 2.0, vertical: fixPadding),
       child: TextField(
         controller: _searchController,
         cursorColor: primaryColor,
+        textDirection: TextDirection.rtl, // For better Arabic support
         decoration: InputDecoration(
           border: InputBorder.none,
           enabledBorder: const UnderlineInputBorder(
@@ -398,8 +422,9 @@ class _SearchScreenState extends State<SearchScreen> {
           focusedBorder: const UnderlineInputBorder(
             borderSide: BorderSide(color: blackColor),
           ),
-          hintText: "Search",
+          hintText: "ابحث عن منتج...", // Arabic placeholder
           hintStyle: regular16Grey,
+          hintTextDirection: TextDirection.rtl,
           prefixIconConstraints:
               const BoxConstraints(minWidth: 35.0, maxWidth: 35.0),
           prefixIcon: const Align(
@@ -412,20 +437,16 @@ class _SearchScreenState extends State<SearchScreen> {
           contentPadding: const EdgeInsets.symmetric(vertical: fixPadding),
           suffixIcon: IconButton(
             onPressed: () async {
-              // Open the filter screen and await the result
               final filterResult = await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const SearchFilterScreen()),
               );
 
               if (filterResult != null) {
-                // Update selected filters
                 setState(() {
                   _selectedCarats = filterResult['carats'];
                   _selectedWeights = filterResult['weights'];
                 });
-
-                // Apply filters to the search results
                 _applyFilters();
               }
             },
@@ -435,7 +456,7 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
         ),
-        onChanged: _performSearch, // Perform search as the user types
+        onChanged: _performSearch,
       ),
     );
   }

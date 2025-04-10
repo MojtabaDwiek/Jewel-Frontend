@@ -12,7 +12,7 @@ class _SearchFilterScreenState extends State<SearchFilterScreen>
     with SingleTickerProviderStateMixin {
   // Define carat and weight options
   final caratList = ["18", "21"];
-  final weightList = ["200", "400", "600", "800", "1000", "1200", "1400"];
+  final weightList = ["10", "25", "50", "75", "100", "200", "400"];
 
   List<String> selectedCarats = [];
   List<String> selectedWeights = [];
