@@ -12,7 +12,6 @@ import 'package:provider/provider.dart';
 import 'package:pn_fl_jewellery_empire/cart_provider.dart';
 import 'package:photo_view/photo_view.dart';
 
-
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({super.key});
 
@@ -138,37 +137,60 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     return Scaffold(
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage.isNotEmpty
-              ? Center(child: Text(_errorMessage))
-              : CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    header(size, context),
-                    SliverList(
-                      delegate: SliverChildListDelegate(
-                        [
-                          heightSpace,
-                          heightSpace,
-                          jewelryInfo(),
-                          heightSpace,
-                          heightSpace,
-                          if (productDetails!['sizes'] != null && productDetails!['sizes'].isNotEmpty) ...[
-                            sizeInfo(),
-                            heightSpace,
-                            heightSpace,
-                          ],
-                          if (productDetails!['lengths'] != null && productDetails!['lengths'].isNotEmpty) ...[
-                            lengthsInfo(),
-                            heightSpace,
-                            heightSpace,
-                          ],
-                        ],
-                      ),
-                    )
-                  ],
-                ),
+      body: Stack(
+        children: [
+          // Background image with very subtle shadow effect
+         Positioned.fill(
+  child: Transform.translate(
+    offset: const Offset(1, 0), // Move down by 100px
+    child: Align(
+      alignment: Alignment.bottomCenter,
+      child: Opacity(
+        opacity: 0.07,
+        child: Image.asset(
+          'assets/logo.jpg',
+          fit: BoxFit.contain,
+          
+        ),
+      ),
+    ),
+  ),
+),
+          
+          // Original content remains exactly the same
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _errorMessage.isNotEmpty
+                  ? Center(child: Text(_errorMessage))
+                  : CustomScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      slivers: [
+                        header(size, context),
+                        SliverList(
+                          delegate: SliverChildListDelegate(
+                            [
+                              heightSpace,
+                              heightSpace,
+                              jewelryInfo(),
+                              heightSpace,
+                              heightSpace,
+                              if (productDetails!['sizes'] != null && productDetails!['sizes'].isNotEmpty) ...[
+                                sizeInfo(),
+                                heightSpace,
+                                heightSpace,
+                              ],
+                              if (productDetails!['lengths'] != null && productDetails!['lengths'].isNotEmpty) ...[
+                                lengthsInfo(),
+                                heightSpace,
+                                heightSpace,
+                              ],
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+        ],
+      ),
       bottomNavigationBar: addToCartButton(),
     );
   }
@@ -229,7 +251,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           final weight = double.tryParse(productDetails!['weight']?.toString() ?? '0') ?? 0.0;
           final imageUrl = productDetails!['images'] != null && productDetails!['images'].isNotEmpty
               ? productDetails!['images'][0].toString()
-              : AppConfig.fallbackImageUrl; // Use fallback image URL from AppConfig
+              : AppConfig.fallbackImageUrl;
           final carat = productDetails?['carat'] != null
               ? double.tryParse(productDetails!['carat'].toString()) ?? 0.0
               : 0.0;
@@ -509,7 +531,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             height: double.infinity,
                             child: PhotoView(
                               imageProvider: CachedNetworkImageProvider(
-                                '${AppConfig.imageBaseUrl}/$imageUrl', // Use imageBaseUrl from AppConfig
+                                '${AppConfig.imageBaseUrl}/$imageUrl',
                               ),
                               minScale: PhotoViewComputedScale.contained,
                               maxScale: PhotoViewComputedScale.covered * 2,
@@ -529,7 +551,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     );
                   },
                   child: CachedNetworkImage(
-                    imageUrl: '${AppConfig.imageBaseUrl}/$imageUrl', // Use imageBaseUrl from AppConfig
+                    imageUrl: '${AppConfig.imageBaseUrl}/$imageUrl',
                     fit: BoxFit.cover,
                     placeholder: (context, url) => const CircularProgressIndicator(),
                     errorWidget: (context, url, error) {
@@ -539,8 +561,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     memCacheWidth: 200,
                   ),
                 );
-              }).toList() ??
-                  [],
+              }).toList() ?? [],
               options: CarouselOptions(
                 viewportFraction: 1.0,
                 height: size.height * 0.25,

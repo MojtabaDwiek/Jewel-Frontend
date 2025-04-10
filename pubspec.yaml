@@ -62,13 +62,21 @@ flutter_launcher_icons:
 
 flutter:
   uses-material-design: true
-
-  # To add assets to your application, add an assets section, like this:
+  
   assets:
+    # Explicitly list all image files
+    - assets/home/pic1.jpg
+    - assets/home/pic2.jpg
+    - assets/home/pic3.jpg
+    - assets/home/pic4.jpg
+    - assets/home/pic5.jpg
+    - assets/home/Jewelry-1.png
+    - assets/home/Jewelry-2.png
+    # Keep other folder assets
     - assets/
+    - assets/home/
     - assets/splash/
     - assets/icons/
-    - assets/home/
     - assets/paymentMethod/
     - assets/success/
     - assets/profile/

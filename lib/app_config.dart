@@ -10,5 +10,5 @@ static const String imageBaseUrl = 'https://fls-9e5ad5b2-2e75-4a91-9c9d-045137c1
   static const String fallbackImageUrl = 'https://example.com/fallback-image.jpg';
 
   // Support phone number for WhatsApp
-  static const String supportPhoneNumber = '+96170764354';
+  static const String supportPhoneNumber = '+96181551626';
 }

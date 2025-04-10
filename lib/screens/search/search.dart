@@ -267,7 +267,7 @@ class _SearchScreenState extends State<SearchScreen> {
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
           child: Text(
-            "Popular",
+            "Latest",
             style: semibold18Black,
           ),
         ),

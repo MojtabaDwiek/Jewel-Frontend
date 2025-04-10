@@ -17,19 +17,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final poster = {
-    "image": "assets/home/poster-image.png",
+    "image": "assets/home/special.jpg",
     "title": "Explore our Special Jewelry Collection",
   };
 
-  final categoryList = [
-    {"image": "assets/home/Jewelry-1.png", "title": "كسر شفت"},
-    {"image": "assets/home/Jewelry-2.png", "title": "تعاليق"},
-    {"image": "assets/home/Jewelry-3.png", "title": "غورميت"},
-    {"image": "assets/home/Jewelry-4.png", "title": "فرنكات"},
-    {"image": "assets/home/Jewelry-1.png", "title": "تركي"},
-    {"image": "assets/home/Jewelry-2.png", "title": "ليزر"},
-    {"image": "assets/home/Jewelry-3.png", "title": "خواتم"},
-  ];
+ 
 
   List<dynamic> _popularList = [];
   bool _isLoading = false;
@@ -129,79 +121,105 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget posterWidget() {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          '/categoryProducts',
-          arguments: "Special",
-        );
-      },
-      child: Container(
-        width: double.maxFinite,
-        height: 155.0,
-        margin: const EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
-        clipBehavior: Clip.hardEdge,
-        decoration: BoxDecoration(
-          color: whiteColor,
-          borderRadius: BorderRadius.circular(10.0),
-          image: DecorationImage(
-            image: AssetImage(poster['image'].toString()),
-            fit: BoxFit.cover,
-          ),
-          border: Border.all(
-            color: const Color(0xFFD4AF37), // Light gold color
-            width: 2.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color.fromARGB(255, 2, 2, 2).withOpacity(0.4),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: const Offset(0, 3), // changes position of shadow
-            ),
-          ],
+ Widget posterWidget() {
+  return GestureDetector(
+    onTap: () {
+      Navigator.pushNamed(
+        context,
+        '/categoryProducts',
+        arguments: "Special",
+      );
+    },
+    child: Container(
+      width: double.maxFinite,
+      height: 155.0,
+      margin: const EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
+      clipBehavior: Clip.hardEdge,
+      decoration: BoxDecoration(
+        color: whiteColor,
+        borderRadius: BorderRadius.circular(10.0),
+        image: DecorationImage(
+          image: AssetImage(poster['image'].toString()),
+          fit: BoxFit.cover,
         ),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10.0),
-            color: whiteColor.withOpacity(0.2),
+        border: Border.all(
+          color: const Color(0xFFD4AF37), // Gold border
+          width: 2.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            spreadRadius: 2,
+            blurRadius: 8,
+            offset: const Offset(0, 4), // Deeper shadow for elevation
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                poster['title'].toString(),
-                style: bold22White,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: fixPadding * 2.0, vertical: fixPadding * 0.4),
-                decoration: BoxDecoration(
-                  color: whiteColor,
-                  borderRadius: BorderRadius.circular(5.0),
-                  border: Border.all(
-                    color: const Color(0xFFD4AF37), // Light gold color
-                    width: 1.5,
-                  ),
-                ),
-                child: const Text(
-                  "Order Now",
-                  style: medium15Black,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
+        ],
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(fixPadding * 2.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10.0),
+          gradient: LinearGradient( // Subtle overlay for text readability
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.black.withOpacity(0.3),
+              Colors.black.withOpacity(0.1),
             ],
           ),
         ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.end, // Align content to bottom
+          children: [
+            Text(
+              poster['title'].toString(),
+              style: const TextStyle(
+                color: Colors.white, // White text for contrast
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow( // Text shadow for legibility
+                    color: Colors.black54,
+                    blurRadius: 6,
+                    offset: Offset(1, 1),
+              )],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: fixPadding * 2.0,
+                vertical: fixPadding * 0.6,
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD4AF37).withOpacity(0.9), // Gold button
+                borderRadius: BorderRadius.circular(5.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Text(
+                "Order Now",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget categoryListContent() {
     return Column(
@@ -274,11 +292,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+   final categoryList = [
+    {"image": "assets/home/pic2.jpg", "title": "كسر شفت"},
+    {"image": "assets/home/pic1.jpg", "title": "تعاليق"},
+    {"image": "assets/home/pic5.jpg", "title": "غورميت"},
+    {"image": "assets/home/pic3.jpg", "title": "فرنكات"},
+    {"image": "assets/home/Jewelry-1.png", "title": "تركي"},
+    {"image": "assets/home/Jewelry-2.png", "title": "ليزر"},
+    {"image": "assets/home/pic4.jpg", "title": "خواتم"},
+  ];
+
   Widget popularListContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        title("Popular"),
+        title("Products"),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
